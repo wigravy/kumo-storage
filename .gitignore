@@ -1,0 +1,7 @@
+# Project exclude paths
+/.gradle/
+/build/
+/kumo-client/build/
+/kumo-client/build/classes/java/main/
+/kumo-server/build/
+/kumo-server/build/classes/java/main/

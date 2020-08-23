@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox alignment="center" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="UI.Controllers.Controller">
+    <MenuBar>
+        <Menu text="File">
+            <MenuItem text="Search"/>
+            <MenuItem text="Exit" onAction="#btnExitOnAction"/>
+        </Menu>
+    </MenuBar>
+    <HBox alignment="CENTER">
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label text="Server"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label text="Your PC"/>
+        <Region HBox.hgrow="ALWAYS"/>
+    </HBox>
+    <HBox VBox.vgrow="ALWAYS">
+        <fx:include fx:id="leftFileTablePane" source="FileTablePane.fxml" HBox.hgrow="ALWAYS"/>
+        <fx:include fx:id="rightFileTablePane" source="FileTablePane.fxml" HBox.hgrow="ALWAYS"/>
+    </HBox>
+
+    <HBox spacing="5">
+        <Button focusTraversable="false" text="Send"/>
+        <Button focusTraversable="false" text="Copy" onAction="#btnCopyOnAction"/>
+        <Button focusTraversable="false" text="Delete"/>
+        <Button focusTraversable="false" onAction="#btnExitOnAction" text="Exit"/>
+    </HBox>
+</VBox>
