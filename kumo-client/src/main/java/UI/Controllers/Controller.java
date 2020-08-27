@@ -22,37 +22,19 @@ public class Controller{
         Platform.exit();
     }
 
-
-//    public void btnCopyOnAction(ActionEvent actionEvent) {
-//        ClientFileTablePaneController serverFileTable = (ClientFileTablePaneController) leftFileTablePane.getProperties().get("ctrl");
-//        ClientFileTablePaneController clientFileTable = (ClientFileTablePaneController) rightFileTablePane.getProperties().get("ctrl");
-//        ClientFileTablePaneController src, dst;
-//        if (serverFileTable.getSelectedFileName() == null && clientFileTable.getSelectedFileName() == null) {
-//            Alert alert = new Alert(Alert.AlertType.ERROR, "First you need to select a file!", ButtonType.OK);
-//            alert.showAndWait();
-//            return;
-//        } else {
-//            if (serverFileTable.getSelectedFileName() != null) {
-//                src = serverFileTable;
-//                dst = clientFileTable;
-//            } else {
-//                src = clientFileTable;
-//                dst = serverFileTable;
-//            }
-//        }
-//        Path srcPath = Paths.get(src.getCurrentPath(), src.getSelectedFileName());
-//        Path dstPath = Paths.get(dst.getCurrentPath()).resolve(srcPath.getFileName().toString());
-//
-//        try {
-//            Files.copy(srcPath, dstPath);
-//            dst.updateFilesList(Paths.get(dst.getCurrentPath()));
-//        } catch (IOException e) {
-//            Alert alert = new Alert(Alert.AlertType.ERROR, "File already exist", ButtonType.OK);
-//            alert.showAndWait();
-//        }
-//    }
-
     public void btnDeleteOnAction(ActionEvent event) {
 
+    }
+
+    public void btnShowHelp(ActionEvent actionEvent) {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("Help");
+        alert.setHeaderText("Hotkeys");
+        alert.setContentText(
+                "Ctrl + c : copy\n" +
+                "Ctrl + v : paste\n" +
+                "Enter : Enter to directory\n" +
+                "Backspace: Enter to upper directory");
+        alert.showAndWait();
     }
 }

@@ -5,17 +5,21 @@
 
 <VBox alignment="center" xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="UI.Controllers.ClientFileTablePaneController">
+            fx:controller="UI.Controllers.ClientFileTable">
     <HBox>
         <ComboBox fx:id="diskListComboBox" onAction="#selectDiskOnAction"/>
         <Button text="Up" onAction="#btnUpPathDirectoryOnAction"/>
         <TextField fx:id="pathToFileTextField" HBox.hgrow="ALWAYS" editable="false"/>
     </HBox>
     <TableView fx:id="filesTableView" VBox.vgrow="ALWAYS"/>
+    <HBox>
+        <Button text="Upload" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Download" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Copy" onAction="#btnCopy" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Paste" onAction="#btnPaste" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Move" onAction="#btnMove" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Rename" onAction="#btnRenameFile" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Delete" onAction="#btnDeleteFile" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
 
-    <properties>
-        <ctrl>
-            <fx:reference source="controller"/>
-        </ctrl>
-    </properties>
+    </HBox>
 </VBox>

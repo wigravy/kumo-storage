@@ -37,12 +37,12 @@ public class Network {
                             protected void initChannel(SocketChannel socketChannel) throws Exception {
                                 channel = socketChannel;
                                 socketChannel.pipeline()
-                                .addLast(
-                                        new StringEncoder(CharsetUtil.UTF_8),
-                                        new LineBasedFrameDecoder(8192),
-                                        new StringDecoder(CharsetUtil.UTF_8),
-                                        new ChunkedWriteHandler(),
-                                        new ClientHandler());
+                                        .addLast(
+                                                new StringEncoder(CharsetUtil.UTF_8),
+                                                new LineBasedFrameDecoder(8192),
+                                                new StringDecoder(CharsetUtil.UTF_8),
+                                                new ChunkedWriteHandler(),
+                                                new ClientHandler());
                             }
                         });
                 ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
@@ -55,6 +55,7 @@ public class Network {
         });
         thread.start();
     }
+
 
     public void authorize(String username, String password) {
         channel.writeAndFlush("/authorize " + username + " " + password);

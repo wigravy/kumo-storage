@@ -42,7 +42,6 @@ public class ClientHandler extends SimpleChannelInboundHandler<String> {
                     cause.getClass().getSimpleName() + ": " +
                     cause.getMessage() + '\n').addListener(ChannelFutureListener.CLOSE);
         }
-        ctx.close();
     }
 }
 
