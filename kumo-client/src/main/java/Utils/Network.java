@@ -7,19 +7,26 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LineBasedFrameDecoder;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.CharsetUtil;
 
 import java.io.*;
-import java.nio.file.Paths;
 
 public class Network {
-    private SocketChannel socketChannel;
-    private String host;
-    private int port;
+    private SocketChannel channel;
+    private final String HOST;
+    private final int PORT;
 
     public Network(String host, int port) {
-        this.host = host;
-        this.port = port;
-        new Thread(() -> {
+        this.HOST = host;
+        this.PORT = port;
+    }
+
+    public void connectToServer() {
+        Thread thread = new Thread(() -> {
             EventLoopGroup clientGroup = new NioEventLoopGroup();
             try {
                 Bootstrap bootstrap = new Bootstrap();
@@ -27,36 +34,33 @@ public class Network {
                         .channel(NioSocketChannel.class)
                         .handler(new ChannelInitializer<SocketChannel>() {
                             @Override
-                            protected void initChannel(SocketChannel channel) throws Exception {
-                                socketChannel = channel;
+                            protected void initChannel(SocketChannel socketChannel) throws Exception {
+                                channel = socketChannel;
+                                socketChannel.pipeline()
+                                .addLast(
+                                        new StringEncoder(CharsetUtil.UTF_8),
+                                        new LineBasedFrameDecoder(8192),
+                                        new StringDecoder(CharsetUtil.UTF_8),
+                                        new ChunkedWriteHandler(),
+                                        new ClientHandler());
                             }
                         });
-                ChannelFuture future = bootstrap.connect(host, port).sync();
+                ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
                 future.channel().closeFuture().sync();
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
                 clientGroup.shutdownGracefully();
             }
-        }).start();
+        });
+        thread.start();
     }
 
-    public void sendFile(String src, String dst) {
-        try {
-            InputStream inputStream = new FileInputStream(src);
-            OutputStream outputStream = new FileOutputStream(dst);
-            byte[] buffer = new byte[8192];
-            int bytesRead = 0;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-                socketChannel.writeAndFlush(buffer);
-            }
-            outputStream.close();
-            inputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void authorize(String username, String password) {
+        channel.writeAndFlush("/authorize " + username + " " + password);
+    }
+
+    public void sendFile(File file) {
+
     }
 }

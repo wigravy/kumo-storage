@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="TOP_CENTER" minHeight="700" minWidth="500"
+      stylesheets="@../css/Authorization.css"
+      xmlns="http://javafx.com/javafx/10.0.2-internal"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="UI.Controllers.AuthorizationController">
+    <ImageView fitHeight="150" fitWidth="200">
+        <Image url="@../img/kumo_logo_big.png" />
+      <VBox.margin>
+         <Insets top="40.0" />
+      </VBox.margin>
+    </ImageView>
+    <Label text="Log in to continue" textAlignment="CENTER">
+      <VBox.margin>
+         <Insets top="40.0" />
+      </VBox.margin></Label>
+    <TextField fx:id="loginField" maxWidth="300" minWidth="200" promptText="Enter your username">
+      <VBox.margin>
+         <Insets top="20.0" />
+      </VBox.margin></TextField>
+    <PasswordField fx:id="passwordField" maxWidth="300" minWidth="200" promptText="Enter your password">
+      <VBox.margin>
+         <Insets top="15.0" />
+      </VBox.margin>
+    </PasswordField>
+    <HBox alignment="TOP_CENTER">
+        <Hyperlink text="Forgot password?">
+         <HBox.margin>
+            <Insets right="110.0" />
+         </HBox.margin></Hyperlink>
+        <Hyperlink text="Sign up" />
+      <VBox.margin>
+         <Insets top="15.0" />
+      </VBox.margin>
+    </HBox>
+    <CheckBox text="Remember?">
+      <VBox.margin>
+         <Insets top="15.0" />
+      </VBox.margin></CheckBox>
+    <Button minHeight="20" minWidth="100" text="Log in" onAction="#btnLoginOnAction">
+      <VBox.margin>
+         <Insets top="20.0" />
+      </VBox.margin></Button>
+</VBox>
