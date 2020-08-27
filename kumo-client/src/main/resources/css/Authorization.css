@@ -1,0 +1,29 @@
+.button {
+    -fx-background-color: #009825;
+    -fx-effect: dropshadow(three-pass-box, #858585, 5, 0.0, 0, 1);
+    -fx-text-fill: #f2f8f2;
+    -fx-font-size: 16;
+}
+
+.button:hover {
+    -fx-background-color: #00d025;
+    -fx-text-fill: #f2f8f2;
+}
+
+.label {
+    -fx-font-size: 18;
+}
+
+.text-field {
+    -fx-border-width: 2;
+    -fx-font-size: 14;
+}
+
+.text-field:focused {
+    -fx-border-color: gold;
+}
+
+.check-box {
+    -fx-font-size: 14;
+}
+
