@@ -17,7 +17,6 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
-        System.out.println(msg);
         if (msg.startsWith("/")) {
             String[] serviceCommand = msg.split(" ");
             if (serviceCommand[0].equals("/authorize")) {

@@ -1,31 +1,38 @@
 package UI.Controllers;
 
 import Utils.FileInfo;
-
+import Utils.Network;
+import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-public class ClientFileTablePaneController implements Initializable {
+public class ServerFileTable implements Initializable {
+    @Setter
+    private Network network;
     @FXML
     TextField pathToFileTextField;
-
     @FXML
     TableView<FileInfo> filesTableView;
 
-    @FXML
-    ComboBox<String> diskListComboBox;
+    ObservableList<String> files = new SimpleListProperty<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -65,11 +72,7 @@ public class ClientFileTablePaneController implements Initializable {
         filesTableView.getSortOrder().add(fileTypeColumn);
         filesTableView.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileLastUpdateColumn);
 
-        diskListComboBox.getItems().clear();
-        for (Path path : FileSystems.getDefault().getRootDirectories()) {
-            diskListComboBox.getItems().add(path.toString());
-        }
-        diskListComboBox.getSelectionModel().select(0);
+
 
         filesTableView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
@@ -139,8 +142,5 @@ public class ClientFileTablePaneController implements Initializable {
         return pathToFileTextField.getText();
     }
 
-    public void selectDiskOnAction(ActionEvent actionEvent) {
-        ComboBox<String> element = (ComboBox<String>) actionEvent.getSource();
-        updateFilesList(Paths.get(element.getSelectionModel().getSelectedItem()));
-    }
+
 }
