@@ -2,22 +2,37 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Map;
 
 
 @Log4j2
 public class FileHandler extends SimpleChannelInboundHandler<String> {
+    EventExecutor executor;
+    static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        channels.add(ctx.channel());
+    }
 
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        channels.remove(ctx.channel());
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
         if (msg.startsWith("/")) {
+            System.out.println(msg);
             String[] serviceCommand = msg.split(" ");
             if (serviceCommand[0].equals("/authorize")) {
                 if (authorize(serviceCommand[1], serviceCommand[2])) {
@@ -60,7 +75,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 
     }
 
-    //Если в процессе работы с клиентом кидается исключение, то мы закрываем с ним соеденение.
+
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();

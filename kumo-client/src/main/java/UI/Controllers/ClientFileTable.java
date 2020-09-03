@@ -31,7 +31,6 @@ public class ClientFileTable implements Initializable {
     Path pathToCopyFile;
 
 
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>();
@@ -86,64 +85,21 @@ public class ClientFileTable implements Initializable {
             if (event.getCode() == KeyCode.ENTER) {
                 enterToDirectory();
             } else if (event.getCode() == KeyCode.BACK_SPACE) {
-                Path upPath = Paths.get(pathToFileTextField.getText()).getParent();
-                if (upPath != null) {
-                    updateFilesList(upPath);
-                }
+                upPathDirectory();
             } else if (event.getCode() == KeyCode.SPACE) {
-               //TODO: множественное выделение объектов
+                //TODO: множественное выделение объектов
             } else if (event.getCode() == KeyCode.C && event.isControlDown()) {
-                Copy();
+                copy();
             } else if (event.getCode() == KeyCode.V && event.isControlDown()) {
-                Paste();
+                paste();
+            } else if (event.getCode() == KeyCode.DELETE) {
+                delete();
             }
         });
 
         updateFilesList(Paths.get(System.getProperty("user.home")));
     }
 
-    public void enterToDirectory() {
-        Path path = Paths.get(pathToFileTextField.getText())
-                .resolve(filesTableView
-                        .getSelectionModel()
-                        .getSelectedItem()
-                        .getFileName());
-        if (Files.isDirectory(path)) {
-            updateFilesList(path);
-        }
-    }
-
-
-    public void updateFilesList(Path path) {
-        try {
-            pathToFileTextField.setText(path.normalize().toAbsolutePath().toString());
-            filesTableView.getItems().clear();
-            filesTableView.getItems().addAll(Files.list(path)
-                    .map(FileInfo::new)
-                    .collect(Collectors.toList()));
-            filesTableView.sort();
-        } catch (IOException e) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Unable to get a list of files. Check file availability and app permissions.", ButtonType.OK);
-            alert.showAndWait();
-        }
-    }
-
-    public void btnUpPathDirectoryOnAction(ActionEvent actionEvent) {
-        Path upPath = Paths.get(pathToFileTextField.getText()).getParent();
-        if (upPath != null) {
-            updateFilesList(upPath);
-        }
-    }
-
-    public void btnDeleteFile(ActionEvent actionEvent) {
-        Path pathToFile = Paths.get(getCurrentPath(), getSelectedFileName());
-        try {
-            Files.delete(pathToFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        updateFilesList(Paths.get(getCurrentPath()));
-    }
 
     public String getSelectedFileName() {
         if (!filesTableView.isFocused()) {
@@ -161,7 +117,62 @@ public class ClientFileTable implements Initializable {
         updateFilesList(Paths.get(element.getSelectionModel().getSelectedItem()));
     }
 
-    public void btnRenameFile(ActionEvent actionEvent) {
+    // Обновление списка файлов
+    public void updateFilesList(Path path) {
+        try {
+            pathToFileTextField.setText(path.normalize().toAbsolutePath().toString());
+            filesTableView.getItems().clear();
+            filesTableView.getItems().addAll(Files.list(path)
+                    .map(FileInfo::new)
+                    .collect(Collectors.toList()));
+            filesTableView.sort();
+        } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Unable to get a list of files. Check file availability and app permissions.", ButtonType.OK);
+            alert.showAndWait();
+        }
+    }
+
+    // Вернуться на папку выше
+    private void upPathDirectory() {
+        Path upPath = Paths.get(pathToFileTextField.getText()).getParent();
+        if (upPath != null) {
+            updateFilesList(upPath);
+        }
+    }
+
+    public void btnUpPathDirectoryOnAction(ActionEvent actionEvent) {
+        upPathDirectory();
+    }
+
+    // Перемещение в выбранную директорию
+    public void enterToDirectory() {
+        Path path = Paths.get(pathToFileTextField.getText())
+                .resolve(filesTableView
+                        .getSelectionModel()
+                        .getSelectedItem()
+                        .getFileName());
+        if (Files.isDirectory(path)) {
+            updateFilesList(path);
+        }
+    }
+
+    // Удаление файла
+    private void delete() {
+        Path pathToFile = Paths.get(getCurrentPath(), getSelectedFileName());
+        try {
+            Files.delete(pathToFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        updateFilesList(Paths.get(getCurrentPath()));
+    }
+
+    public void btnDeleteFile(ActionEvent actionEvent) {
+        delete();
+    }
+
+    // Переименование
+    private void rename() {
         Path pathToFile = Paths.get(getCurrentPath(), getSelectedFileName());
         TextInputDialog dialog = new TextInputDialog(getSelectedFileName());
         dialog.setTitle("Rename file");
@@ -178,16 +189,21 @@ public class ClientFileTable implements Initializable {
         updateFilesList(Paths.get(getCurrentPath()));
     }
 
-
-    public void btnCopy(ActionEvent actionEvent) {
-        Copy();
+    public void btnRenameFile(ActionEvent actionEvent) {
+        rename();
     }
 
-    private void Copy() {
+    // Копирование
+    private void copy() {
         pathToCopyFile = Paths.get(getCurrentPath(), getSelectedFileName());
     }
 
-    private void Paste() {
+    public void btnCopy(ActionEvent actionEvent) {
+        copy();
+    }
+
+    // Вставка
+    private void paste() {
         if (pathToCopyFile != null && !(getCurrentPath().equals(pathToCopyFile))) {
             Path dst = Paths.get(getCurrentPath()).resolve(pathToCopyFile.getFileName().toString());
             try {
@@ -200,10 +216,11 @@ public class ClientFileTable implements Initializable {
     }
 
     public void btnPaste(ActionEvent actionEvent) {
-       Paste();
+        paste();
     }
 
-    public void btnMove(ActionEvent actionEvent) {
+    // Перемещение. Сначала надо нажать скопировать чтобы поместить файл или папку в буфер.
+    private void move() {
         if (pathToCopyFile != null) {
             Path dst = Paths.get(getCurrentPath()).resolve(pathToCopyFile.getFileName().toString());
             try {
@@ -216,5 +233,9 @@ public class ClientFileTable implements Initializable {
             Alert alert = new Alert(Alert.AlertType.ERROR, "Before moving, you must select the file. This can be done with the command 'Copy'", ButtonType.OK);
             alert.showAndWait();
         }
+    }
+
+    public void btnMove(ActionEvent actionEvent) {
+        move();
     }
 }

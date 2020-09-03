@@ -11,4 +11,14 @@
         <TextField fx:id="pathToFileTextField" HBox.hgrow="ALWAYS" editable="false"/>
     </HBox>
     <TableView fx:id="filesTableView" VBox.vgrow="ALWAYS"/>
+    <HBox>
+        <Button text="Upload" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Download" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Copy" onAction="#btnCopy" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Paste" onAction="#btnPaste" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Move" onAction="#btnMove" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Rename" onAction="#btnRenameFile" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button text="Delete" onAction="#btnDeleteFile" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+
+    </HBox>
 </VBox>

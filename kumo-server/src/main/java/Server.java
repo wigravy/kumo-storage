@@ -35,9 +35,9 @@ public final class Server {
                         public void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline p = ch.pipeline();
                             p.addLast(
-                                    new StringEncoder(CharsetUtil.UTF_8),
-                                    new LineBasedFrameDecoder(8192),
                                     new StringDecoder(CharsetUtil.UTF_8),
+                                    new LineBasedFrameDecoder(8192),
+                                    new StringEncoder(CharsetUtil.UTF_8),
                                     new ChunkedWriteHandler(),
                                     new FileHandler());
                         }

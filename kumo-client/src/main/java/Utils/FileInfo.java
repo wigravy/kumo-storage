@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,6 +20,7 @@ public class FileInfo {
     private FileType fileType;
     private long size;
     private LocalDateTime lastModified;
+    File file;
 
     public FileInfo(Path path) {
         try {
