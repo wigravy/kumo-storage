@@ -1,6 +1,6 @@
 package UI.Controllers;
 
-import Utils.FileInfo;
+import utils.FileInfo;
 
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;

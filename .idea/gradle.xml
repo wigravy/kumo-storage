@@ -10,6 +10,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/ObjectMessages" />
             <option value="$PROJECT_DIR$/kumo-client" />
             <option value="$PROJECT_DIR$/kumo-server" />
           </set>

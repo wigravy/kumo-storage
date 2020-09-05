@@ -1,6 +1,6 @@
 package UI.Controllers;
 
-import Utils.FileInfo;
+import utils.FileInfo;
 import network.Network;
 import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;

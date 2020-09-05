@@ -32,6 +32,7 @@ public class Main extends Application {
         Parent root = authLoader.load();
         scene = new Scene(root);
 
+
         authorizationController = authLoader.getController();
         authorizationController.setNetwork(network);
         authorizationController.setSocket(socket);

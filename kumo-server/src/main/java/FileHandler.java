@@ -4,23 +4,25 @@ import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.log4j.Log4j2;
 
+import Utils.Messages.AbstractMessage;
+import Utils.Messages.ServiceMessage;
+import Utils.Messages.FileMessage;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Map;
 
 
 @Log4j2
-public class FileHandler extends SimpleChannelInboundHandler<String> {
-    EventExecutor executor;
+public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
     static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("Client is connected: " + ctx.name());
         channels.add(ctx.channel());
     }
 
@@ -30,21 +32,31 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
-        if (msg.startsWith("/")) {
-            System.out.println(msg);
-            String[] serviceCommand = msg.split(" ");
-            if (serviceCommand[0].equals("/authorize")) {
-                if (authorize(serviceCommand[1], serviceCommand[2])) {
-                    ctx.writeAndFlush("/authorize OK");
-                } else {
-                    ctx.writeAndFlush("/authorize BAD");
+    protected void channelRead0(ChannelHandlerContext ctx, AbstractMessage abstractMessage) throws Exception {
+        System.out.println(abstractMessage.getClass().getSimpleName());
+        if (abstractMessage instanceof ServiceMessage) {
+            ServiceMessage serviceMessage = (ServiceMessage) abstractMessage;
+            String msg = serviceMessage.getMessage();
+            if (msg.startsWith("/")) {
+                System.out.println(msg);
+                String[] serviceCommand = msg.split(" ");
+                if (serviceCommand[0].equals("/authorize")) {
+                    if (authorize(serviceCommand[1], serviceCommand[2])) {
+                        System.out.println(ctx.name() + ": [authorize OK]");
+                        sendServiceMessage("/authorize OK", ctx);
+                    } else {
+                        System.out.println(ctx.name() + ": [authorize BAD]");
+                        sendServiceMessage("/authorize BAD", ctx);
+                    }
                 }
             }
-            if (serviceCommand[0].equals("/upload")) {
-              uploadFile(ctx, msg);
-            }
         }
+    }
+
+    private void sendServiceMessage(String message, ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(ServiceMessage.builder()
+                .message(message)
+                .build());
     }
 
     private void uploadFile(ChannelHandlerContext ctx, String msg) throws IOException {
