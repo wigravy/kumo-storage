@@ -5,7 +5,7 @@
 
 <VBox alignment="center" xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="UI.Controllers.ClientFileTable">
+            fx:controller="Controllers.ClientFileTable">
     <HBox>
         <ComboBox fx:id="diskListComboBox" onAction="#selectDiskOnAction"/>
         <Button text="Up" onAction="#btnUpPathDirectoryOnAction"/>

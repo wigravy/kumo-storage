@@ -1,5 +1,8 @@
-import UI.Controllers.AuthorizationController;
-import UI.Controllers.Controller;
+import Controllers.AuthorizationController;
+import Utils.Messages.AbstractMessage;
+import Utils.Messages.ServiceMessage;
+import lombok.Getter;
+import network.Callback;
 import network.Network;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -9,15 +12,13 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.Socket;
 
 
 public class Main extends Application {
-    private static AuthorizationController authorizationController;
-    private static  Controller controller;
-    private static Network network;
     private static Scene scene;
-    private static Socket socket;
+    private static Network network;
+
+    private static AuthorizationController authorizationController;
 
     static void setRoot(FXMLLoader fxml) throws IOException {
         scene.setRoot(fxml.load());
@@ -32,10 +33,8 @@ public class Main extends Application {
         Parent root = authLoader.load();
         scene = new Scene(root);
 
-
         authorizationController = authLoader.getController();
         authorizationController.setNetwork(network);
-        authorizationController.setSocket(socket);
 
         stage.setTitle("Kumo storage");
         stage.setResizable(false);
@@ -50,9 +49,14 @@ public class Main extends Application {
 
 
     public static void main(String[] args) {
-        network = new Network("localhost", 8500);
-        network.connectToServer();
-        socket = network.getSocket();
+        network = new Network("localhost", 8500, new Callback() {
+            @Override
+            public void call(AbstractMessage message) {
+                ServiceMessage serviceMessage = (ServiceMessage) message;
+                System.out.println("in main class: " + serviceMessage.getMessage());
+                authorizationController.setAbstractMessage(message);
+            }
+        });
         launch(args);
     }
 }

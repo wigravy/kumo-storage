@@ -22,18 +22,20 @@ public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("Client is connected: " + ctx.name());
+        System.out.println("Client is connected: " + ctx.channel().remoteAddress());
         channels.add(ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("Client is disconnected: " + ctx.channel().remoteAddress());
         channels.remove(ctx.channel());
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, AbstractMessage abstractMessage) throws Exception {
-        System.out.println(abstractMessage.getClass().getSimpleName());
+        System.out.print(abstractMessage.getClass().getSimpleName() + " has arrived from client: [" + ctx.channel().remoteAddress() + "]: ");
+
         if (abstractMessage instanceof ServiceMessage) {
             ServiceMessage serviceMessage = (ServiceMessage) abstractMessage;
             String msg = serviceMessage.getMessage();
@@ -42,10 +44,10 @@ public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
                 String[] serviceCommand = msg.split(" ");
                 if (serviceCommand[0].equals("/authorize")) {
                     if (authorize(serviceCommand[1], serviceCommand[2])) {
-                        System.out.println(ctx.name() + ": [authorize OK]");
+                        System.out.println(ctx.channel().remoteAddress() + ": [authorize OK]");
                         sendServiceMessage("/authorize OK", ctx);
                     } else {
-                        System.out.println(ctx.name() + ": [authorize BAD]");
+                        System.out.println(ctx.channel().remoteAddress() + ": [authorize BAD]");
                         sendServiceMessage("/authorize BAD", ctx);
                     }
                 }
@@ -54,28 +56,9 @@ public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
     }
 
     private void sendServiceMessage(String message, ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(ServiceMessage.builder()
+        ctx.channel().writeAndFlush(ServiceMessage.builder()
                 .message(message)
                 .build());
-    }
-
-    private void uploadFile(ChannelHandlerContext ctx, String msg) throws IOException {
-        RandomAccessFile file = null;
-        long length = -1;
-        try {
-            file = new RandomAccessFile(msg, "r");
-            length = file.length();
-        } catch (Exception e) {
-            ctx.writeAndFlush("ERR: " + e.getClass().getSimpleName() + ": " + e.getMessage() + '\n');
-            return;
-        } finally {
-            if (length < 0 && file != null) {
-                file.close();
-            }
-        }
-        ctx.write("OK: " + file.length() + '\n');
-        ctx.write(new DefaultFileRegion(file.getChannel(), 0, length));
-        ctx.writeAndFlush("\n");
     }
 
 

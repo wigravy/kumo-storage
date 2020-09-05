@@ -39,8 +39,8 @@ public final class Server {
                         public void initChannel(SocketChannel channel) throws Exception {
                             ChannelPipeline pipeline = channel.pipeline();
                             pipeline.addLast(
-                                    new ObjectEncoder(),
                                     new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                                    new ObjectEncoder(),
                                     new FileHandler());
                         }
                     });

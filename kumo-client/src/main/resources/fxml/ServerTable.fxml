@@ -5,7 +5,7 @@
 
 <VBox alignment="center" xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="UI.Controllers.ServerFileTable">
+            fx:controller="Controllers.ServerFileTable">
     <HBox>
         <Button text="Up" onAction="#btnUpPathDirectoryOnAction"/>
         <TextField fx:id="pathToFileTextField" HBox.hgrow="ALWAYS" editable="false"/>

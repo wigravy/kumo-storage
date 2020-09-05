@@ -1,90 +1,61 @@
 package network;
 
-import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
-import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
-import lombok.Getter;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.serialization.*;
 
 import Utils.Messages.AbstractMessage;
 import Utils.Messages.ServiceMessage;
-import Utils.Messages.FileMessage;
 
 import java.io.*;
-import java.net.Socket;
 
 public class Network {
-    @Getter
-    private Socket socket;
     private final String HOST;
     private final int PORT;
-    private ObjectEncoderOutputStream os;
-    @Getter
-    private ObjectDecoderInputStream is;
-    private static AbstractMessage abstractMessage;
+    private SocketChannel channel;
 
-    public Network(String host, int port) {
+    public Network(String host, int port, Callback callback) {
         this.HOST = host;
         this.PORT = port;
-    }
-
-    public void connectToServer() {
         Thread thread = new Thread(() -> {
-            try (Socket socket = new Socket(HOST, PORT)) {
-                this.socket = socket;
-                os = new ObjectEncoderOutputStream(socket.getOutputStream());
-                is = new ObjectDecoderInputStream(socket.getInputStream());
-            } catch (IOException e) {
+            EventLoopGroup group = new NioEventLoopGroup();
+            try {
+                Bootstrap bootstrap = new Bootstrap();
+                bootstrap.group(group)
+                        .channel(NioSocketChannel.class)
+                        .handler(new ChannelInitializer<SocketChannel>() {
+                            @Override
+                            public void initChannel(SocketChannel socketChannel) throws Exception {
+                                channel = socketChannel;
+                                socketChannel.pipeline()
+                                        .addLast(
+                                                new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                                                new ObjectEncoder(),
+                                                new FileHandler(callback));
+                            }
+                        });
+                ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
+                future.channel().closeFuture().sync();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                group.shutdownGracefully();
             }
         });
-        thread.setDaemon(true);
         thread.start();
-
-        Thread in = new Thread(() -> {
-            while (true) {
-                try {
-                    if (is.available() > -1) {
-                        abstractMessage = (AbstractMessage) is.readObject();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        in.setDaemon(true);
-        in.start();
-
     }
 
-    public void sendServiceMessage(String message) {
-        try {
-            os.writeObject(ServiceMessage.builder()
-                    .message(message)
-                    .build());
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void sendServiceMessage(String message) throws IOException {
+        channel.writeAndFlush(ServiceMessage.builder()
+                .message(message)
+                .build());
     }
 
-    public String getMessage() throws Exception {
-        if (abstractMessage instanceof ServiceMessage) {
-            ServiceMessage serviceMessage = (ServiceMessage) abstractMessage;
-            System.out.println(serviceMessage.getMessage());
-            return serviceMessage.getMessage();
-        } else {
-            throw new Exception("Bad request. The return value is not service message.");
-    }
-
-}
 
     public void close() {
-        try {
-            is.close();
-            os.close();
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        channel.close();
     }
 }

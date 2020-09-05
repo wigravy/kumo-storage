@@ -1,4 +1,4 @@
-package UI.Controllers;
+package Controllers;
 
 import utils.FileInfo;
 import network.Network;
