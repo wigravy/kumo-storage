@@ -1,3 +1,4 @@
+import Utils.Messages.FileListMessage;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
@@ -13,6 +14,8 @@ import Utils.Messages.FileMessage;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 @Log4j2
@@ -50,6 +53,9 @@ public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
                         System.out.println(ctx.channel().remoteAddress() + ": [authorize BAD]");
                         sendServiceMessage("/authorize BAD", ctx);
                     }
+                } else if (serviceCommand[0].equals("/updateFileList")) {
+                    Path path = Paths.get("storage/wigravy/" + serviceCommand[1]);
+                    updateFileList(ctx, path);
                 }
             }
         }
@@ -61,9 +67,15 @@ public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
                 .build());
     }
 
+    private void updateFileList(ChannelHandlerContext ctx, Path path) throws IOException {
+        FileListMessage fileListMessage = new FileListMessage();
+        fileListMessage.updateFileList(path);
+        ctx.writeAndFlush(fileListMessage);
+    }
+
 
     private boolean authorize(String name, String password) {
-        if (name.equals("1") && password.equals("1")) {
+        if (name.equals("wigravy") && password.equals("1")) {
             return true;
         }
         return false;

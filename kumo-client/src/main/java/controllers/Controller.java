@@ -1,4 +1,4 @@
-package Controllers;
+package controllers;
 
 import network.Network;
 import javafx.application.Platform;
