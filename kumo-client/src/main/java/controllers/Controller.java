@@ -1,29 +1,19 @@
-package UI.Controllers;
+package controllers;
 
+import network.Network;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.layout.VBox;
+import lombok.Setter;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class Controller{
-    @FXML
-    VBox leftFileTablePane, rightFileTablePane;
-
+    @Setter
+    private Network network;
 
     public void btnExitOnAction(ActionEvent actionEvent) {
         Platform.exit();
-    }
-
-    public void btnDeleteOnAction(ActionEvent event) {
-
     }
 
     public void btnShowHelp(ActionEvent actionEvent) {

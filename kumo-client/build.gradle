@@ -8,7 +8,7 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-mainClassName = 'Main'
+mainClassName = 'main.Main'
 
 repositories {
     mavenCentral()
@@ -21,6 +21,8 @@ dependencies {
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.13.3'
     compile group: 'org.openjfx', name: 'javafx-controls', version: '14'
     compile group: 'org.openjfx', name: 'javafx-fxml', version: '14'
+
+    implementation project(":ObjectMessages")
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }

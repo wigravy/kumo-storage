@@ -1,12 +1,11 @@
-package UI.Controllers;
+package controllers;
 
-import Utils.FileInfo;
-import Utils.Network;
+import utils.FileInfo;
+import network.Network;
 import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -16,7 +15,6 @@ import lombok.Setter;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -143,4 +141,18 @@ public class ServerFileTable implements Initializable {
     }
 
 
+    public void btnCopy(ActionEvent actionEvent) {
+    }
+
+    public void btnPaste(ActionEvent actionEvent) {
+    }
+
+    public void btnMove(ActionEvent actionEvent) {
+    }
+
+    public void btnRenameFile(ActionEvent actionEvent) {
+    }
+
+    public void btnDeleteFile(ActionEvent actionEvent) {
+    }
 }

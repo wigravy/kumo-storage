@@ -4,6 +4,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LineBasedFrameDecoder;
+import io.netty.handler.codec.serialization.ClassResolver;
+import io.netty.handler.codec.serialization.ClassResolvers;
+import io.netty.handler.codec.serialization.ObjectDecoder;
+import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
@@ -32,13 +36,11 @@ public final class Server {
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        public void initChannel(SocketChannel ch) throws Exception {
-                            ChannelPipeline p = ch.pipeline();
-                            p.addLast(
-                                    new StringEncoder(CharsetUtil.UTF_8),
-                                    new LineBasedFrameDecoder(8192),
-                                    new StringDecoder(CharsetUtil.UTF_8),
-                                    new ChunkedWriteHandler(),
+                        public void initChannel(SocketChannel channel) throws Exception {
+                            ChannelPipeline pipeline = channel.pipeline();
+                            pipeline.addLast(
+                                    new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                                    new ObjectEncoder(),
                                     new FileHandler());
                         }
                     });

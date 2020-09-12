@@ -1,66 +1,78 @@
+import Utils.Messages.*;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 @Log4j2
-public class FileHandler extends SimpleChannelInboundHandler<String> {
+public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
+    static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    private final Authorization authorizationService = new Authorization();
+
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("Client is disconnected: " + ctx.channel().remoteAddress());
+        channels.remove(ctx.channel());
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, AbstractMessage abstractMessage) throws Exception {
+        System.out.print(abstractMessage.getClass().getSimpleName() + " has arrived from client: [" + ctx.channel().remoteAddress() + "]: ");
+        if (abstractMessage instanceof ServiceMessage) {
+            readServiceCommand(ctx, abstractMessage);
+        }
+    }
+
+    private void readServiceCommand(ChannelHandlerContext ctx, AbstractMessage abstractMessage) throws IOException {
+        ServiceMessage serviceMessage = (ServiceMessage) abstractMessage;
+        String msg = serviceMessage.getMessage();
         if (msg.startsWith("/")) {
+            System.out.println(msg);
             String[] serviceCommand = msg.split(" ");
             if (serviceCommand[0].equals("/authorize")) {
-                if (authorize(serviceCommand[1], serviceCommand[2])) {
-                    ctx.writeAndFlush("/authorize OK");
-                } else {
-                    ctx.writeAndFlush("/authorize BAD");
-                }
-            }
-            if (serviceCommand[0].equals("/upload")) {
-              uploadFile(ctx, msg);
+                ctx.writeAndFlush(new AuthtorizationMessage(true));
+//                authorize(serviceCommand[1], serviceCommand[2]);
+            } else if (serviceCommand[0].equals("/updateFileList")) {
+                Path path = Paths.get("storage/wigravy/" + serviceCommand[1]);
+                updateFileList(ctx, path);
             }
         }
     }
 
-    private void uploadFile(ChannelHandlerContext ctx, String msg) throws IOException {
-        RandomAccessFile file = null;
-        long length = -1;
-        try {
-            file = new RandomAccessFile(msg, "r");
-            length = file.length();
-        } catch (Exception e) {
-            ctx.writeAndFlush("ERR: " + e.getClass().getSimpleName() + ": " + e.getMessage() + '\n');
-            return;
-        } finally {
-            if (length < 0 && file != null) {
-                file.close();
-            }
-        }
-        ctx.write("OK: " + file.length() + '\n');
-        ctx.write(new DefaultFileRegion(file.getChannel(), 0, length));
-        ctx.writeAndFlush("\n");
+    private void sendServiceMessage(String message, ChannelHandlerContext ctx) {
+        ctx.channel().writeAndFlush(ServiceMessage.builder()
+                .message(message)
+                .build());
+    }
+
+    private void updateFileList(ChannelHandlerContext ctx, Path path) throws IOException {
+        FileListMessage fileListMessage = new FileListMessage();
+        fileListMessage.updateFileList(path);
+        ctx.writeAndFlush(fileListMessage);
     }
 
 
-    private boolean authorize(String name, String password) {
-        if (name.equals("1") && password.equals("1")) {
-            return true;
-        }
-        return false;
+//    private AuthtorizationMessage authorize(String name, String password) {
+//        return authorizationService. (name, password);
+//    }
 
-    }
 
-    //Если в процессе работы с клиентом кидается исключение, то мы закрываем с ним соеденение.
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();

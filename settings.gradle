@@ -1,3 +1,4 @@
 include 'kumo-server'
 include 'kumo-client'
+include 'ObjectMessages'
 
