@@ -1,13 +1,12 @@
 package main;
 
-import Utils.Messages.ServiceMessage;
 import controllers.AuthorizationController;
 import Utils.Messages.AbstractMessage;
-import javafx.geometry.Rectangle2D;
-import javafx.stage.Screen;
+import controllers.ClientFileTable;
+import controllers.Controller;
+import controllers.ServerFileTable;
 import lombok.Getter;
 import lombok.Setter;
-import network.Callback;
 import network.Network;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -37,6 +36,7 @@ public class Main extends Application {
         stage.setHeight(900.0);
         stage.setWidth(1600.0);
         stage.centerOnScreen();
+        network.getClientHandler().setController(simpleLoader.getController());
     }
 
     public static void setRootLogin() throws IOException {
@@ -58,6 +58,7 @@ public class Main extends Application {
 
         authorizationController = authLoader.getController();
         authorizationController.setNetwork(network);
+        network.getClientHandler().setAuthorizationController(authorizationController);
         this.stage = stage;
         stage.setTitle("Kumo storage");
         stage.setResizable(false);
@@ -72,7 +73,7 @@ public class Main extends Application {
 
 
     public static void main(String[] args) {
-        network = new Network("localhost", 8500, Main::setAbstractMessage);
         launch(args);
+        network = new Network("localhost", 8500);
     }
 }

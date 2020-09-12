@@ -1,4 +1,4 @@
-import Utils.Messages.FileListMessage;
+import Utils.Messages.*;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
@@ -7,10 +7,6 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.log4j.Log4j2;
-
-import Utils.Messages.AbstractMessage;
-import Utils.Messages.ServiceMessage;
-import Utils.Messages.FileMessage;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -21,12 +17,12 @@ import java.nio.file.Paths;
 @Log4j2
 public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
     static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    private final Authorization authorizationService = new Authorization();
 
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("Client is connected: " + ctx.channel().remoteAddress());
-        channels.add(ctx.channel());
+
     }
 
     @Override
@@ -38,25 +34,23 @@ public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, AbstractMessage abstractMessage) throws Exception {
         System.out.print(abstractMessage.getClass().getSimpleName() + " has arrived from client: [" + ctx.channel().remoteAddress() + "]: ");
-
         if (abstractMessage instanceof ServiceMessage) {
-            ServiceMessage serviceMessage = (ServiceMessage) abstractMessage;
-            String msg = serviceMessage.getMessage();
-            if (msg.startsWith("/")) {
-                System.out.println(msg);
-                String[] serviceCommand = msg.split(" ");
-                if (serviceCommand[0].equals("/authorize")) {
-                    if (authorize(serviceCommand[1], serviceCommand[2])) {
-                        System.out.println(ctx.channel().remoteAddress() + ": [authorize OK]");
-                        sendServiceMessage("/authorize OK", ctx);
-                    } else {
-                        System.out.println(ctx.channel().remoteAddress() + ": [authorize BAD]");
-                        sendServiceMessage("/authorize BAD", ctx);
-                    }
-                } else if (serviceCommand[0].equals("/updateFileList")) {
-                    Path path = Paths.get("storage/wigravy/" + serviceCommand[1]);
-                    updateFileList(ctx, path);
-                }
+            readServiceCommand(ctx, abstractMessage);
+        }
+    }
+
+    private void readServiceCommand(ChannelHandlerContext ctx, AbstractMessage abstractMessage) throws IOException {
+        ServiceMessage serviceMessage = (ServiceMessage) abstractMessage;
+        String msg = serviceMessage.getMessage();
+        if (msg.startsWith("/")) {
+            System.out.println(msg);
+            String[] serviceCommand = msg.split(" ");
+            if (serviceCommand[0].equals("/authorize")) {
+                ctx.writeAndFlush(new AuthtorizationMessage(true));
+//                authorize(serviceCommand[1], serviceCommand[2]);
+            } else if (serviceCommand[0].equals("/updateFileList")) {
+                Path path = Paths.get("storage/wigravy/" + serviceCommand[1]);
+                updateFileList(ctx, path);
             }
         }
     }
@@ -74,13 +68,9 @@ public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
     }
 
 
-    private boolean authorize(String name, String password) {
-        if (name.equals("wigravy") && password.equals("1")) {
-            return true;
-        }
-        return false;
-
-    }
+//    private AuthtorizationMessage authorize(String name, String password) {
+//        return authorizationService. (name, password);
+//    }
 
 
     @Override

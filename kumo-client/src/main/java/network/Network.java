@@ -7,8 +7,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.*;
 
-import Utils.Messages.AbstractMessage;
 import Utils.Messages.ServiceMessage;
+import lombok.Getter;
 
 import java.io.*;
 
@@ -16,8 +16,10 @@ public class Network {
     private final String HOST;
     private final int PORT;
     private SocketChannel channel;
+    @Getter
+    private ClientHandler clientHandler;
 
-    public Network(String host, int port, Callback callback) {
+    public Network(String host, int port) {
         this.HOST = host;
         this.PORT = port;
         Thread thread = new Thread(() -> {
@@ -34,7 +36,7 @@ public class Network {
                                         .addLast(
                                                 new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
                                                 new ObjectEncoder(),
-                                                new FileHandler(callback));
+                                                clientHandler);
                             }
                         });
                 ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
