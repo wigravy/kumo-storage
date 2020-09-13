@@ -1,27 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="center" xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="controllers.ClientFileTable">
-    <HBox>
-        <ComboBox fx:id="diskListComboBox" onAction="#selectDiskOnAction"/>
-        <Button text="Up" onAction="#btnUpPathDirectoryOnAction"/>
-        <Button text="Refresh"/>
-        <TextField fx:id="pathToFileTextField" HBox.hgrow="ALWAYS" editable="false"/>
+<VBox alignment="center" stylesheets="@../css/MainApp.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.ClientFileTable">
+    <HBox spacing="4">
+        <ComboBox fx:id="diskListComboBox" onAction="#selectDiskOnAction" minHeight="35"/>
+        <Button onAction="#btnUpPathDirectoryOnAction" text="Up" minHeight="35"/>
+        <Button text="Refresh" minHeight="35"/>
+        <TextField fx:id="pathToFileTextField" editable="false" HBox.hgrow="ALWAYS" minHeight="35">
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets></TextField>
+      <VBox.margin>
+         <Insets bottom="5.0" top="5.0" />
+      </VBox.margin>
     </HBox>
-    <TableView fx:id="filesTableView" VBox.vgrow="ALWAYS"/>
-    <HBox>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button text="Upload" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-        <Button text="Download" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-        <Button text="Copy" onAction="#btnCopy" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-        <Button text="Paste" onAction="#btnPaste" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-        <Button text="Move" onAction="#btnMove" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-        <Button text="Rename" onAction="#btnRenameFile" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-        <Button text="Delete" onAction="#btnDeleteFile" focusTraversable="false" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-        <Region HBox.hgrow="ALWAYS"/>
+    <TableView fx:id="clientFilesTable" VBox.vgrow="ALWAYS" />
+    <HBox spacing="4">
+        <Button focusTraversable="false" maxWidth="Infinity" text="Upload" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" text="Download" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnCopy" text="Copy" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnPaste" text="Paste" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnMove" text="Move" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnRenameFile" text="Rename" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnDeleteFile" text="Delete" HBox.hgrow="ALWAYS" />
+      <opaqueInsets>
+         <Insets />
+      </opaqueInsets>
+      <VBox.margin>
+         <Insets top="5.0" />
+      </VBox.margin>
     </HBox>
 </VBox>

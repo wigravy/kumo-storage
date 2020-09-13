@@ -16,8 +16,6 @@ public class Network {
     private final String HOST;
     private final int PORT;
     private SocketChannel channel;
-    @Getter
-    private ClientHandler clientHandler;
 
     public Network(String host, int port) {
         this.HOST = host;
@@ -36,7 +34,7 @@ public class Network {
                                         .addLast(
                                                 new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
                                                 new ObjectEncoder(),
-                                                clientHandler);
+                                                new ClientHandler());
                             }
                         });
                 ChannelFuture future = bootstrap.connect(HOST, PORT).sync();

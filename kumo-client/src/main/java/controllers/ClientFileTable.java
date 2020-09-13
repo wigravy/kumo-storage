@@ -23,7 +23,7 @@ public class ClientFileTable implements Initializable {
     TextField pathToFileTextField;
 
     @FXML
-    TableView<FileInfo> filesTableView;
+    TableView<FileInfo> clientFilesTable;
 
     @FXML
     ComboBox<String> diskListComboBox;
@@ -64,10 +64,10 @@ public class ClientFileTable implements Initializable {
         TableColumn<FileInfo, String> fileLastUpdateColumn = new TableColumn<>("Last update");
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         fileLastUpdateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(dateTimeFormatter)));
-        fileLastUpdateColumn.setMinWidth(150);
+        fileLastUpdateColumn.setMinWidth(200);
 
-        filesTableView.getSortOrder().add(fileTypeColumn);
-        filesTableView.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileLastUpdateColumn);
+        clientFilesTable.getSortOrder().add(fileTypeColumn);
+        clientFilesTable.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileLastUpdateColumn);
 
         diskListComboBox.getItems().clear();
         for (Path path : FileSystems.getDefault().getRootDirectories()) {
@@ -75,13 +75,13 @@ public class ClientFileTable implements Initializable {
         }
         diskListComboBox.getSelectionModel().select(0);
 
-        filesTableView.setOnMouseClicked(event -> {
+        clientFilesTable.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 enterToDirectory();
             }
         });
 
-        filesTableView.setOnKeyPressed(event -> {
+        clientFilesTable.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 enterToDirectory();
             } else if (event.getCode() == KeyCode.BACK_SPACE) {
@@ -102,10 +102,10 @@ public class ClientFileTable implements Initializable {
 
 
     public String getSelectedFileName() {
-        if (!filesTableView.isFocused()) {
+        if (!clientFilesTable.isFocused()) {
             return null;
         }
-        return filesTableView.getSelectionModel().getSelectedItem().getFileName();
+        return clientFilesTable.getSelectionModel().getSelectedItem().getFileName();
     }
 
     public String getCurrentPath() {
@@ -121,11 +121,11 @@ public class ClientFileTable implements Initializable {
     public void updateFilesList(Path path) {
         try {
             pathToFileTextField.setText(path.normalize().toAbsolutePath().toString());
-            filesTableView.getItems().clear();
-            filesTableView.getItems().addAll(Files.list(path)
+            clientFilesTable.getItems().clear();
+            clientFilesTable.getItems().addAll(Files.list(path)
                     .map(FileInfo::new)
                     .collect(Collectors.toList()));
-            filesTableView.sort();
+            clientFilesTable.sort();
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.WARNING, "Unable to get a list of files. Check file availability and app permissions.", ButtonType.OK);
             alert.showAndWait();
@@ -147,7 +147,7 @@ public class ClientFileTable implements Initializable {
     // Перемещение в выбранную директорию
     public void enterToDirectory() {
         Path path = Paths.get(pathToFileTextField.getText())
-                .resolve(filesTableView
+                .resolve(clientFilesTable
                         .getSelectionModel()
                         .getSelectedItem()
                         .getFileName());

@@ -11,7 +11,6 @@ public class Authorization {
 
 
 
-
     public boolean createUser(String username, String password) {
         Session session = null;
         session = sessionFactory.getCurrentSession();

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="center" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.Controller">
+<VBox alignment="center" stylesheets="@../css/MainApp.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.Controller">
     <MenuBar>
         <Menu text="File">
             <MenuItem onAction="#btnShowHelp" text="Help (F1)" />
@@ -12,18 +13,33 @@
     </MenuBar>
     <HBox alignment="CENTER">
         <Region HBox.hgrow="ALWAYS" />
-        <Label text="Server" />
+        <Label fx:id="serverlabel" text="Server" />
         <Region HBox.hgrow="ALWAYS" />
         <Region HBox.hgrow="ALWAYS" />
-        <Label text="Your PC" />
+        <Label fx:id="pclabel" text="Your PC" />
         <Region HBox.hgrow="ALWAYS" />
     </HBox>
-    <HBox VBox.vgrow="ALWAYS">
+    <HBox spacing="5.0" VBox.vgrow="ALWAYS">
         <fx:include fx:id="ServerTable" source="ServerTable.fxml" HBox.hgrow="ALWAYS" />
         <fx:include fx:id="FileTablePane" source="FileTablePane.fxml" HBox.hgrow="ALWAYS" />
+      <VBox.margin>
+         <Insets left="5.0" right="5.0" />
+      </VBox.margin>
     </HBox>
 
     <HBox spacing="5">
-        <Button focusTraversable="false" minHeight="40.0" minWidth="100.0" onAction="#btnExitOnAction" text="Exit" />
+        <Button focusTraversable="false" minHeight="35.0" minWidth="100.0" onAction="#btnExitOnAction" text="Exit">
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets>
+         <HBox.margin>
+            <Insets bottom="5.0" left="5.0" />
+         </HBox.margin></Button>
+      <opaqueInsets>
+         <Insets />
+      </opaqueInsets>
+      <VBox.margin>
+         <Insets top="5.0" />
+      </VBox.margin>
     </HBox>
 </VBox>

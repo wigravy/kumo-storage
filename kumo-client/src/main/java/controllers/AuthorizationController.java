@@ -1,19 +1,27 @@
 package controllers;
 
 
-import Utils.Messages.AbstractMessage;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import lombok.Setter;
+import main.ClientApp;
 import network.Network;
 
 import java.io.IOException;
 
 
 public class AuthorizationController {
-    @Setter
     private Network network;
+    private static AuthorizationController instance;
+
+    public AuthorizationController() {
+        instance = this;
+    }
+
+    public static AuthorizationController getInstance() {
+        return instance;
+    }
 
     @FXML
     TextField loginField;
@@ -25,18 +33,15 @@ public class AuthorizationController {
     Button loginButton;
 
 
-
     public void btnLoginOnAction(ActionEvent event) {
         if (loginField.getText().isEmpty() || passwordField.getText().isEmpty()) {
             showDialog("Authorization error", "First you need to enter your username and password!", Alert.AlertType.ERROR);
         } else {
-            String username = replaceForbiddenSymbols(loginField.getText());
-            String password = replaceForbiddenSymbols(passwordField.getText());
+            String username = replaceInvalidSymbols(loginField.getText());
+            String password = replaceInvalidSymbols(passwordField.getText());
             try {
                 network.sendServiceMessage("/authorize " + username + " " + password);
                 loginButton.setDisable(true);
-
-
             } catch (
                     IOException e) {
                 e.printStackTrace();
@@ -53,7 +58,7 @@ public class AuthorizationController {
 
     @FXML
     public void initialize() {
-
+        network = ClientApp.getNetwork();
     }
 
 
@@ -61,11 +66,27 @@ public class AuthorizationController {
         Alert alert = new Alert(alertType, msg, ButtonType.OK);
         alert.setTitle(title);
         alert.showAndWait();
-        loginButton.setDisable(false);
     }
 
-    // Убираем все запрещенные символы
-    private String replaceForbiddenSymbols(String str) {
+    public void btnShowHelp(ActionEvent actionEvent) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Help");
+        alert.setHeaderText("Hotkeys");
+        alert.setContentText(
+                "Ctrl + c : copy\n" +
+                        "Ctrl + v : paste\n" +
+                        "Enter : Enter to directory\n" +
+                        "Delete : Delete file or directory\n" +
+                        "Backspace: Enter to upper directory");
+        alert.showAndWait();
+    }
+
+    private String replaceInvalidSymbols(String str) {
         return str.replaceAll("[^0-9a-zA-Z&!?$#*]", "");
+    }
+
+    public void btnExitOnAction(ActionEvent actionEvent) {
+        network.close();
+        Platform.exit();
     }
 }

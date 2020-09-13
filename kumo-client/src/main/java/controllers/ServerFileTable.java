@@ -65,7 +65,7 @@ public class ServerFileTable implements Initializable {
         TableColumn<FileInfo, String> fileLastUpdateColumn = new TableColumn<>("Last update");
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         fileLastUpdateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(dateTimeFormatter)));
-        fileLastUpdateColumn.setMinWidth(150);
+        fileLastUpdateColumn.setMinWidth(200);
 
         filesTableView.getSortOrder().add(fileTypeColumn);
         filesTableView.getColumns().addAll(fileTypeColumn, fileNameColumn, fileSizeColumn, fileLastUpdateColumn);

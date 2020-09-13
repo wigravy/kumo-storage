@@ -1,5 +1,7 @@
 package controllers;
 
+import javafx.fxml.FXML;
+import main.ClientApp;
 import network.Network;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -8,8 +10,7 @@ import javafx.scene.control.Alert.AlertType;
 import lombok.Setter;
 
 
-public class Controller{
-    @Setter
+public class Controller {
     private Network network;
 
     public void btnExitOnAction(ActionEvent actionEvent) {
@@ -24,7 +25,13 @@ public class Controller{
                 "Ctrl + c : copy\n" +
                 "Ctrl + v : paste\n" +
                 "Enter : Enter to directory\n" +
+                "Delete : Delete file or directory\n" +
                 "Backspace: Enter to upper directory");
         alert.showAndWait();
+    }
+
+    @FXML
+    public void initialize() {
+        network = ClientApp.getNetwork();
     }
 }

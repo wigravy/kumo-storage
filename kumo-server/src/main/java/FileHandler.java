@@ -42,17 +42,16 @@ public class FileHandler extends SimpleChannelInboundHandler<AbstractMessage> {
     private void readServiceCommand(ChannelHandlerContext ctx, AbstractMessage abstractMessage) throws IOException {
         ServiceMessage serviceMessage = (ServiceMessage) abstractMessage;
         String msg = serviceMessage.getMessage();
-        if (msg.startsWith("/")) {
-            System.out.println(msg);
-            String[] serviceCommand = msg.split(" ");
-            if (serviceCommand[0].equals("/authorize")) {
-                ctx.writeAndFlush(new AuthtorizationMessage(true));
+        System.out.println(msg);
+        String[] serviceCommand = msg.split(" ");
+        if (serviceCommand[0].equals("/authorize")) {
+            ctx.channel().writeAndFlush(new AuthtorizationMessage(true));
 //                authorize(serviceCommand[1], serviceCommand[2]);
-            } else if (serviceCommand[0].equals("/updateFileList")) {
-                Path path = Paths.get("storage/wigravy/" + serviceCommand[1]);
-                updateFileList(ctx, path);
-            }
+        } else if (serviceCommand[0].equals("/updateFileList")) {
+            Path path = Paths.get("storage/wigravy/" + serviceCommand[1]);
+            updateFileList(ctx, path);
         }
+
     }
 
     private void sendServiceMessage(String message, ChannelHandlerContext ctx) {
