@@ -58,7 +58,6 @@ public class AuthorizationController {
 
     @FXML
     public void initialize() {
-        network = ClientApp.getNetwork();
     }
 
 

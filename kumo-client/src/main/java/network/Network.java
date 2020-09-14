@@ -7,8 +7,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.*;
 
-import Utils.Messages.ServiceMessage;
-import lombok.Getter;
 
 import java.io.*;
 
@@ -31,10 +29,7 @@ public class Network {
                             public void initChannel(SocketChannel socketChannel) throws Exception {
                                 channel = socketChannel;
                                 socketChannel.pipeline()
-                                        .addLast(
-                                                new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                                new ObjectEncoder(),
-                                                new ClientHandler());
+                                        .addLast(new ClientHandler());
                             }
                         });
                 ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
@@ -49,9 +44,7 @@ public class Network {
     }
 
     public void sendServiceMessage(String message) throws IOException {
-        channel.writeAndFlush(ServiceMessage.builder()
-                .message(message)
-                .build());
+
     }
 
 

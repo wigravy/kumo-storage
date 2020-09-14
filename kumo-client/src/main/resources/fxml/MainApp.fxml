@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="center" minHeight="900.0" minWidth="600.0" stylesheets="@../css/MainApp.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.MainAppController">
+    <HBox alignment="CENTER">
+        <Region HBox.hgrow="ALWAYS" />
+        <Label fx:id="serverlabel" text="Server" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Label fx:id="pclabel" text="Your PC" />
+        <Region HBox.hgrow="ALWAYS" />
+    </HBox>
+    <HBox spacing="5.0" VBox.vgrow="ALWAYS">
+        <VBox alignment="center" HBox.hgrow="ALWAYS">
+            <HBox spacing="4">
+                <Button minHeight="35" onAction="#btnUpPathDirectoryOnAction" text="Up" />
+                <Button minHeight="35" text="Refresh" />
+                <TextField fx:id="serverPathToFile" editable="false" minHeight="35" HBox.hgrow="ALWAYS" />
+                <VBox.margin>
+                    <Insets bottom="5.0" />
+                </VBox.margin>
+            </HBox>
+            <TableView fx:id="serverFilesTable" VBox.vgrow="ALWAYS" />
+        </VBox>
+        <VBox alignment="center" HBox.hgrow="ALWAYS">
+            <HBox spacing="4">
+                <ComboBox fx:id="diskListComboBox" minHeight="35" onAction="#selectDiskOnAction" />
+                <Button minHeight="35" onAction="#btnUpPathDirectoryOnAction" text="Up" />
+                <Button minHeight="35" text="Refresh" />
+                <TextField fx:id="clientPathToFile" editable="false" minHeight="35" HBox.hgrow="ALWAYS" />
+                <VBox.margin>
+                    <Insets bottom="5.0" />
+                </VBox.margin>
+            </HBox>
+            <TableView fx:id="clientFilesTable" VBox.vgrow="ALWAYS" />
+        </VBox>
+
+        <VBox.margin>
+         <Insets left="5.0" right="5.0" />
+      </VBox.margin>
+    </HBox>
+    <HBox spacing="4">
+        <Button focusTraversable="false" maxWidth="Infinity" text="Upload" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" text="Download" HBox.hgrow="ALWAYS" />
+<!--        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnCopy" text="Copy" HBox.hgrow="ALWAYS" />-->
+<!--        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnPaste" text="Paste" HBox.hgrow="ALWAYS" />-->
+<!--        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnMove" text="Move" HBox.hgrow="ALWAYS" />-->
+        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnRenameFile" text="Rename" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnDeleteFile" text="Delete" HBox.hgrow="ALWAYS" />
+        <Button fx:id="ExitBtn" focusTraversable="false" maxWidth="Infinity" onAction="#btnExitOnAction" text="Exit" HBox.hgrow="ALWAYS" />
+        <VBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+        </VBox.margin>
+    </HBox>
+</VBox>
