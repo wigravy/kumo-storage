@@ -8,7 +8,7 @@
 
 <VBox fx:id="back" alignment="TOP_CENTER" minHeight="700" minWidth="500" stylesheets="@../css/Authorization.css"
       xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="controllers.AuthorizationController">
+      fx:controller="com.wigravy.kumoStorage.client.controllers.AuthorizationController">
     <ImageView fitHeight="150" fitWidth="300">
         <Image url="@../img/cloud_logo.png" />
       <VBox.margin>

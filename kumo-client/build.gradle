@@ -8,7 +8,7 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-mainClassName = 'main.ClientApp'
+mainClassName = 'com.wigravy.kumoStorage.client.main.ClientApp'
 
 repositories {
     mavenCentral()

@@ -1,4 +1,4 @@
-package controllers;
+package com.wigravy.kumoStorage.client.controllers;
 
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -6,13 +6,15 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import utils.FileInfo;
+import com.wigravy.kumoStorage.common.utils.FileInfo;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 
-
+/*
+** Код для инициализации таблиц с файлами Сервера и Клиента.
+ */
 public class HelperGui {
     public static void prepareFileTable(TableView<FileInfo> tableView) {
         TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("");
@@ -34,7 +36,7 @@ public class HelperGui {
                     setText(null);
                     setStyle("");
                 } else {
-                    String text = String.format("%,d bytes", item);
+                    String text = FileInfo.getStringSize(item);
                     if (item == -1L) {
                         text = "[DIR]";
                     }

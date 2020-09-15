@@ -1,19 +1,19 @@
-package network;
+package com.wigravy.kumoStorage.client.network;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.serialization.*;
-
-
-import java.io.*;
+import lombok.Getter;
 
 public class Network {
     private final String HOST;
     private final int PORT;
+    @Getter
     private SocketChannel channel;
+    @Getter
+    private MainHandler mainHandler = new MainHandler();
 
     public Network(String host, int port) {
         this.HOST = host;
@@ -29,7 +29,7 @@ public class Network {
                             public void initChannel(SocketChannel socketChannel) throws Exception {
                                 channel = socketChannel;
                                 socketChannel.pipeline()
-                                        .addLast(new ClientHandler());
+                                        .addLast(mainHandler);
                             }
                         });
                 ChannelFuture future = bootstrap.connect(HOST, PORT).sync();
@@ -42,11 +42,6 @@ public class Network {
         });
         thread.start();
     }
-
-    public void sendServiceMessage(String message) throws IOException {
-
-    }
-
 
     public void close() {
         channel.close();

@@ -1,14 +1,14 @@
-package controllers;
+package com.wigravy.kumoStorage.client.controllers;
 
 import javafx.application.Platform;
-import utils.FileInfo;
+import com.wigravy.kumoStorage.common.utils.FileInfo;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
-import utils.FileService;
+import com.wigravy.kumoStorage.common.utils.FileService;
 
 import java.io.IOException;
 import java.net.URL;
@@ -28,8 +28,6 @@ public class MainAppController implements Initializable {
     TableView<FileInfo> serverFilesTable;
     @FXML
     ComboBox<String> diskListComboBox;
-
-    private final FileService fileService = new FileService();
 
 
     @Override
@@ -121,7 +119,7 @@ public class MainAppController implements Initializable {
     // Удаление
     private void delete()  {
         try {
-            fileService.deleteFile(getSelectedFile());
+            FileService.deleteFile(getSelectedFile());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -139,7 +137,7 @@ public class MainAppController implements Initializable {
         dialog.setHeaderText("Enter a new filename");
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent() && !(result.get().equals(getSelectedFileName()))) {
-            fileService.renameFile(getSelectedFile(), result.get());
+            FileService.renameFile(getSelectedFile(), result.get());
         }
         updateFilesList(Paths.get(getCurrentPath()));
     }
@@ -150,7 +148,7 @@ public class MainAppController implements Initializable {
 
     // Копирование
     private void copy() {
-        fileService.copyFile(getSelectedFile());
+        FileService.copyFile(getSelectedFile());
     }
 
     public void btnCopy(ActionEvent actionEvent) {
@@ -160,7 +158,7 @@ public class MainAppController implements Initializable {
     // Вставка
     private void paste() {
         try {
-            fileService.pasteFile(Paths.get(getCurrentPath()));
+            FileService.pasteFile(Paths.get(getCurrentPath()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -175,7 +173,7 @@ public class MainAppController implements Initializable {
     // Перемещение. Сначала надо нажать скопировать чтобы поместить файл или папку в буфер.
     private void move()  {
         try {
-            fileService.move(Paths.get(getCurrentPath()));
+            FileService.move(Paths.get(getCurrentPath()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -204,4 +202,6 @@ public class MainAppController implements Initializable {
                         "Backspace: Enter to upper directory");
         alert.showAndWait();
     }
+
+
 }

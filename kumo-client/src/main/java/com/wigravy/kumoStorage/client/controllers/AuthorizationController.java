@@ -1,36 +1,29 @@
-package controllers;
+package com.wigravy.kumoStorage.client.controllers;
 
 
+import com.wigravy.kumoStorage.client.main.ClientApp;
+import com.wigravy.kumoStorage.common.utils.FileService;
+import com.wigravy.kumoStorage.common.utils.ServiceMessage;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import main.ClientApp;
-import network.Network;
+import com.wigravy.kumoStorage.client.network.Network;
 
-import java.io.IOException;
+import java.net.URL;
+import java.util.ResourceBundle;
 
 
-public class AuthorizationController {
-    private Network network;
-    private static AuthorizationController instance;
-
-    public AuthorizationController() {
-        instance = this;
-    }
-
-    public static AuthorizationController getInstance() {
-        return instance;
-    }
-
+public class AuthorizationController implements Initializable {
+    private Network network = ClientApp.getNetwork();
     @FXML
     TextField loginField;
-
     @FXML
     PasswordField passwordField;
-
     @FXML
     Button loginButton;
+    ServiceMessage serviceMessage;
 
 
     public void btnLoginOnAction(ActionEvent event) {
@@ -39,25 +32,14 @@ public class AuthorizationController {
         } else {
             String username = replaceInvalidSymbols(loginField.getText());
             String password = replaceInvalidSymbols(passwordField.getText());
-            try {
-                network.sendServiceMessage("/authorize " + username + " " + password);
-                loginButton.setDisable(true);
-            } catch (
-                    IOException e) {
-                e.printStackTrace();
-            }
+            FileService.sendCommand(network.getChannel(), String.format("/authorization %s %s", username, password));
         }
     }
 
-    public void LoginError() {
+    public void loginError() {
         passwordField.clear();
         showDialog("Login Error", "Incorrect username or password", Alert.AlertType.ERROR);
         loginButton.setDisable(false);
-    }
-
-
-    @FXML
-    public void initialize() {
     }
 
 
@@ -67,18 +49,6 @@ public class AuthorizationController {
         alert.showAndWait();
     }
 
-    public void btnShowHelp(ActionEvent actionEvent) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Help");
-        alert.setHeaderText("Hotkeys");
-        alert.setContentText(
-                "Ctrl + c : copy\n" +
-                        "Ctrl + v : paste\n" +
-                        "Enter : Enter to directory\n" +
-                        "Delete : Delete file or directory\n" +
-                        "Backspace: Enter to upper directory");
-        alert.showAndWait();
-    }
 
     private String replaceInvalidSymbols(String str) {
         return str.replaceAll("[^0-9a-zA-Z&!?$#*]", "");
@@ -87,5 +57,21 @@ public class AuthorizationController {
     public void btnExitOnAction(ActionEvent actionEvent) {
         network.close();
         Platform.exit();
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        network.getMainHandler().setAuthCallback(serviceMessage);
+        serviceMessage = serviceMsg -> {
+            if (serviceMsg.equals("/authorization OK")) {
+                Platform.runLater(this::toMain);
+            } else {
+                loginError();
+            }
+        };
+    }
+
+    private void toMain(){
+        ClientApp.getInstance().gotoMainApp();
     }
 }

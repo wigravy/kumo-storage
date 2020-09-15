@@ -1,4 +1,4 @@
-package utils;
+package com.wigravy.kumoStorage.common.utils;
 
 public enum FileType {
     FILE("F"), DIRECTORY("D");

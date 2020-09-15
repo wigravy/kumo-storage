@@ -1,3 +1,5 @@
+package com.wigravy.kumoStorage.server.main;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -38,10 +40,7 @@ public final class Server {
                         @Override
                         public void initChannel(SocketChannel channel) throws Exception {
                             ChannelPipeline pipeline = channel.pipeline();
-                            pipeline.addLast(
-                                    new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                    new ObjectEncoder(),
-                                    new FileHandler());
+                            pipeline.addLast(new MainHandler());
                         }
                     });
             ChannelFuture f = b.bind(PORT).sync();

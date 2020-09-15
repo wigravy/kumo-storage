@@ -1,4 +1,4 @@
-package utils;
+package com.wigravy.kumoStorage.common.utils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,6 +12,8 @@ public class FileInfo {
     private FileType fileType;
     private long size;
     private LocalDateTime lastModified;
+
+    public FileInfo() {}
 
     public FileInfo(Path path) {
         try {
@@ -57,5 +59,20 @@ public class FileInfo {
 
     public void setLastModified(LocalDateTime lastModified) {
         this.lastModified = lastModified;
+    }
+
+    public static String getStringSize(long bytes) {
+        if(bytes < 1000){
+            return String.format ("%,d bytes", bytes);
+        }else if (bytes < 1000 * Math.pow(2, 10)) {
+            return String.format ("%,d KB", (long)(bytes / Math.pow(2, 10)));
+        }else if (bytes < 1000 * Math.pow(2, 20) ) {
+            return String.format ("%,d MB", (long)(bytes / Math.pow(2, 20)));
+        }else if (bytes < 1000 * Math.pow(2, 30) ) {
+            return String.format ("%,d GB", (long)(bytes / Math.pow(2, 30)));
+        }else if (bytes < 1000 * Math.pow(2, 40) ) {
+            return String.format ("%,d TB", (long)(bytes / Math.pow(2, 40)));
+        }
+        return "n/a";
     }
 }

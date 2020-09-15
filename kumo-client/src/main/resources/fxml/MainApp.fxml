@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="center" minHeight="900.0" minWidth="600.0" stylesheets="@../css/MainApp.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.MainAppController">
+<VBox alignment="center" minHeight="900.0" minWidth="600.0" stylesheets="@../css/MainApp.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.wigravy.kumoStorage.client.controllers.MainAppController">
     <HBox alignment="CENTER">
         <Region HBox.hgrow="ALWAYS" />
         <Label fx:id="serverlabel" text="Server" />

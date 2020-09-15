@@ -1,37 +1,31 @@
-package database.entity;
+package com.wigravy.kumoStorage.server.database.entity;
 
-
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import org.hibernate.annotations.Table;
 
 import javax.persistence.*;
 
 @Entity
-@Table(name = "users")
-@Getter
-@Setter
+@Table(appliesTo = "users")
+@Data
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column
     private long id;
-
-    @Column(name = "name")
+    @Column
     private String name;
-
-    @Column(name = "password")
+    @Column
     private String password;
-
     @Column(name = "root_directory")
     private String rootDirectory;
 
     public User() {
     }
 
-    public User(String name, String password, String rootDirectory) {
+    public User(String name, String password) {
         this.name = name;
         this.password = password;
-        this.rootDirectory = rootDirectory;
     }
 
     @Override
