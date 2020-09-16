@@ -8,12 +8,16 @@ import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
 import io.netty.util.concurrent.FutureListener;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class FileService {
@@ -23,9 +27,11 @@ public class FileService {
     private static Path tmpFile = null;
 
     // Отправка файла. Оптимизировано: размер файлового буфера генерируется в самом начале под размер всех последующих команд.
-    public static void uploadFile(Channel channel, Path path, FutureListener listener) {
+
+    public static void uploadFile(Channel channel, Path path, FutureListener listener) throws Exception {
         try {
-            fileRegion = new DefaultFileRegion(path.normalize().toFile(), 0, Files.size(path));
+            System.out.println(path.toString());
+            fileRegion = new DefaultFileRegion(new FileInputStream(path.toFile()).getChannel(), 0, Files.size(path));
             filenameBytes = path.getFileName().toString().getBytes(StandardCharsets.UTF_8);
             buffer = ByteBufAllocator.DEFAULT.directBuffer(1 + 4 + filenameBytes.length + 8);
 
@@ -72,7 +78,7 @@ public class FileService {
 
     // Переименование файла
     public static void renameFile(Path path, String newFileName) throws IOException {
-        Path renameTo = path.resolve(newFileName);
+        Path renameTo = path.resolveSibling(newFileName);
         Files.move(path, renameTo, StandardCopyOption.REPLACE_EXISTING);
     }
 
@@ -94,20 +100,20 @@ public class FileService {
     }
 
     public static List<FileInfo> createFileList(String s) {
-        List<FileInfo> temp = null;
+        List<FileInfo> temp = new ArrayList<>();
         String[] files = s.split("\n");
         for (String file : files) {
             String[] tmp = file.split(",");
             FileInfo fileInfo = new FileInfo();
             fileInfo.setFileName(tmp[0]);
             fileInfo.setSize(Long.parseLong(tmp[1]));
-            if (tmp[2].equals("F")) {
+            if (tmp[2].equals("FILE")) {
                 fileInfo.setFileType(FileType.FILE);
             } else {
                 fileInfo.setFileType(FileType.DIRECTORY);
             }
             fileInfo.setLastModified(LocalDateTime.parse(tmp[3]));
-            temp.add(new FileInfo());
+            temp.add(fileInfo);
         }
         return temp;
     }

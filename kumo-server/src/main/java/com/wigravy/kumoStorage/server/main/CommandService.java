@@ -38,11 +38,9 @@ public class CommandService {
         }
     }
 
-    public static void downloadFile(Channel channel, Path path) {
+    public static void downloadFile(Channel channel, Path path) throws Exception {
         FileService.uploadFile(channel, path, null);
     }
 
-    public static boolean enterToDirectory(Path currentPath, String directory) {
-        return false;
-    }
+
 }

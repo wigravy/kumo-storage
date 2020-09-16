@@ -16,14 +16,13 @@ import java.util.ResourceBundle;
 
 
 public class AuthorizationController implements Initializable {
-    private Network network = ClientApp.getNetwork();
+    private Network network = Network.getInstance();
     @FXML
     TextField loginField;
     @FXML
     PasswordField passwordField;
     @FXML
     Button loginButton;
-    ServiceMessage serviceMessage;
 
 
     public void btnLoginOnAction(ActionEvent event) {
@@ -61,17 +60,20 @@ public class AuthorizationController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        network.getMainHandler().setAuthCallback(serviceMessage);
-        serviceMessage = serviceMsg -> {
-            if (serviceMsg.equals("/authorization OK")) {
-                Platform.runLater(this::toMain);
-            } else {
-                loginError();
-            }
-        };
+        Thread t = new Thread(() -> {
+            network.getMainHandler().setAuthCallback(serviceMsg -> {
+                System.out.println(serviceMsg);
+                if (serviceMsg.equals("OK")) {
+                    Platform.runLater(this::toMain);
+                } else {
+                    loginError();
+                }
+            });
+        });
+        t.start();
     }
 
-    private void toMain(){
+    private void toMain() {
         ClientApp.getInstance().gotoMainApp();
     }
 }

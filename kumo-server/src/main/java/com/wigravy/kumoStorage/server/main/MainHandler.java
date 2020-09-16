@@ -6,13 +6,14 @@ import com.wigravy.kumoStorage.common.utils.FileService;
 import com.wigravy.kumoStorage.common.utils.ListSignalBytes;
 import com.wigravy.kumoStorage.common.utils.State;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -23,12 +24,12 @@ import java.util.stream.Collectors;
 @Log4j2
 public class MainHandler extends SimpleChannelInboundHandler<Object> {
     private State currentState = State.IDLE;
-    private long fileLength = 0L;
+    private long fileSize = 0L;
     private int filenameLength = 0;
     private int commandLength = 0;
-    private StringBuilder stringBuilder = new StringBuilder();
+    private StringBuilder stringBuilder;
     private BufferedOutputStream out;
-    private Path currentPath;
+    private Path currentPath = Path.of("storage", "wigravy");
 
 
     @Override
@@ -43,9 +44,8 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 if (readByte == ListSignalBytes.CMD_SIGNAL_BYTE) {
                     currentState = State.COMMAND;
                 } else if (readByte == ListSignalBytes.FILE_SIGNAL_BYTE) {
+                    System.out.println("Файл стучится");
                     currentState = State.FILE_NAME_LENGTH;
-                } else if (readByte == ListSignalBytes.LIST_SIGNAL_BYTE) {
-
                 } else {
                     throw new RuntimeException("Unknown byte command arrived: " + readByte);
                 }
@@ -61,108 +61,124 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
             }
             if (currentState == State.COMMAND_READ) {
                 stringBuilder = new StringBuilder();
-                while (buf.readableBytes() > 0 || commandLength != 0) {
+                while (buf.readableBytes() > 0 && commandLength != 0) {
                     commandLength--;
                     stringBuilder.append((char) buf.readByte());
                 }
-                System.out.println(stringBuilder);
                 currentState = State.COMMAND_DO;
             }
-        }
-        if (currentState == State.COMMAND_DO) {
-            String[] command = stringBuilder.toString().split(" ");
-            System.out.println(ctx.channel().isOpen());
-            if (command[0].equals("/authorization")) {
-                System.out.println("OK 2");
 
-//                        currentPath = Path.of("storage", "wigravy");
-                FileService.sendCommand(ctx.channel(), "/authorization OK");
-                currentState = State.FILE_LIST;
+            if (currentState == State.COMMAND_DO) {
+                String[] command = stringBuilder.toString().split(" ");
+                if (command[0].equals("/authorization")) {
+//                currentPath = Path.of("storage", "wigravy");
+                    FileService.sendCommand(ctx.channel(), "/authorization OK");
 //                        currentPath = CommandService.authorization(command[1], command[2], ctx.channel());
-            } else if (command[0].equals("/download")) {
-                CommandService.downloadFile(ctx.channel(), currentPath.resolve(command[1]));
-            } else if (command[0].equals("/enterToDirectory")) {
-                if (CommandService.enterToDirectory(currentPath, command[1])) {
-                    currentState = State.FILE_LIST;
-                }
-            } else {
-                throw new RuntimeException("Unknown command: " + stringBuilder.toString());
-            }
-
-        }
-
-        /*
-         **      Стадия получения файла
-         */
-        if (currentState == State.FILE_NAME_LENGTH) {
-            if (buf.readableBytes() >= 4) {
-                filenameLength = buf.readInt();
-                currentState = State.NAME;
-            }
-        }
-
-        if (currentState == State.NAME) {
-            stringBuilder = new StringBuilder();
-            while (buf.readableBytes() >= filenameLength) {
-                byte[] filename = new byte[filenameLength];
-                buf.readBytes(filename);
-                stringBuilder.append(Arrays.toString(filename));
-                out = new BufferedOutputStream(new FileOutputStream(currentPath + stringBuilder.toString()));
-                currentState = State.FILE_SIZE;
-            }
-        }
-
-        if (currentState == State.FILE_SIZE) {
-            if (buf.readableBytes() >= 8) {
-                fileLength = buf.readLong();
-                currentState = State.FILE;
-            }
-        }
-
-        if (currentState == State.FILE) {
-            while (buf.readableBytes() > 0) {
-                out.write(buf.readByte());
-                fileLength--;
-                if (fileLength == 0) {
                     currentState = State.IDLE;
-                    out.close();
-                    break;
+                } else if (command[0].equals("/download")) {
+                    CommandService.downloadFile(ctx.channel(), currentPath.resolve(command[1]));
+                    currentState = State.IDLE;
+                } else if (command[0].equals("/enterToDirectory")) {
+                    currentPath = currentPath.resolve(command[1]);
+                    currentState = State.FILE_LIST;
+                } else if (command[0].equals("/updateFileList")) {
+                    currentState = State.FILE_LIST;
+                } else if (command[0].equals("/delete")) {
+                    FileService.deleteFile(currentPath.resolve(command[1]));
+                    currentState = State.FILE_LIST;
+                } else if (command[0].equals("/rename")) {
+                    System.out.println(currentPath.resolve(" путь до файла: " + command[1]) + " новое имя файла: " + command[2]);
+                    FileService.renameFile(currentPath.resolve(command[1]), command[2]);
+                    currentState = State.FILE_LIST;
+                } else {
+                    throw new RuntimeException("Unknown command: " + stringBuilder.toString());
+                }
+
+            }
+
+            /*
+             **      Стадия получения файла
+             */
+            if (currentState == State.FILE_NAME_LENGTH) {
+                if (buf.readableBytes() >= 4) {
+                    filenameLength = buf.readInt();
+                    currentState = State.NAME;
+                    System.out.println("Длинна имени файла: " + filenameLength);
                 }
             }
-        }
-        /*
-         **      Передача списка файлов
-         */
 
-        if (currentState == State.FILE_LIST) {
-            List<FileInfo> serverFiles = Files.list(currentPath)
-                    .map(FileInfo::new)
-                    .collect(Collectors.toList());
-            stringBuilder.setLength(0);
-            stringBuilder.trimToSize();
-            for (FileInfo fileInfo : serverFiles) {
-                stringBuilder.append(String.format("%s,%d,%s,%s\n", fileInfo.getFileName(), fileInfo.getSize(), fileInfo.getFileType(), fileInfo.getLastModified()));
+            if (currentState == State.NAME) {
+
+                while (buf.readableBytes() >= filenameLength) {
+                    byte[] filenameBytes = new byte[filenameLength];
+                    buf.readBytes(filenameBytes);
+                    String filename = new String(filenameBytes, StandardCharsets.UTF_8);
+                    File file = new File(currentPath + "/" + filename);
+                    out = new BufferedOutputStream(new FileOutputStream(file));
+                    currentState = State.FILE_SIZE;
+                    System.out.println("Имя файла: " + filename);
+                }
             }
-            FileService.sendCommand(ctx.channel(), "/FileList " + stringBuilder.toString());
-            currentState = State.IDLE;
+
+            if (currentState == State.FILE_SIZE) {
+                if (buf.readableBytes() >= 8) {
+                    fileSize = buf.readLong();
+                    currentState = State.FILE;
+                    System.out.println("Размер файла: " + fileSize);
+                }
+            }
+
+            if (currentState == State.FILE) {
+                long receivedFileSize = 0;
+                while (buf.readableBytes() > 0) {
+                    out.write(buf.readByte());
+                    receivedFileSize++;
+                    if (fileSize == receivedFileSize) {
+                        System.out.println("Готово");
+                        currentState = State.FILE_LIST;
+                        out.close();
+                        break;
+                    }
+                }
+            }
+            /*
+             **      Передача списка файлов
+             */
+
+            if (currentState == State.FILE_LIST) {
+                List<FileInfo> serverFiles = Files.list(currentPath)
+                        .map(FileInfo::new)
+                        .collect(Collectors.toList());
+                stringBuilder = new StringBuilder();
+                for (FileInfo fileInfo : serverFiles) {
+                    stringBuilder.append(String.format("%s,%d,%s,%s\n", fileInfo.getFileName(), fileInfo.getSize(), fileInfo.getFileType(), fileInfo.getLastModified()));
+                }
+                FileService.sendCommand(ctx.channel(), "/FileList " + stringBuilder.toString());
+                currentState = State.IDLE;
+            }
         }
     }
 
+        @Override
+        public void channelActive (ChannelHandlerContext ctx) throws Exception {
+            System.out.println(ctx.channel().remoteAddress() + " channel is connected.");
+        }
 
+        @Override
+        public void channelInactive (ChannelHandlerContext ctx) throws Exception {
+            System.out.println(ctx.channel().remoteAddress() + " channel is disconnected.");
+        }
 
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("channel is close");
+        @Override
+        public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            cause.printStackTrace();
+            if (ctx.channel().isActive()) {
+                FileService.sendCommand(ctx.channel(), "ERR: " +
+                        cause.getClass().getSimpleName() + ": " +
+                        cause.getMessage() + '\n');
+            }
+        }
     }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        System.out.println("channel error");
-        cause.printStackTrace();
-        ctx.close();
-    }
-}
 
 
 

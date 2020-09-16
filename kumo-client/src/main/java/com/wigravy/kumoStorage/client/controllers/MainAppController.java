@@ -1,5 +1,8 @@
 package com.wigravy.kumoStorage.client.controllers;
 
+import com.wigravy.kumoStorage.client.main.ClientApp;
+import com.wigravy.kumoStorage.client.network.Network;
+import com.wigravy.kumoStorage.common.utils.ServiceMessage;
 import javafx.application.Platform;
 import com.wigravy.kumoStorage.common.utils.FileInfo;
 
@@ -10,14 +13,18 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import com.wigravy.kumoStorage.common.utils.FileService;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.*;
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class MainAppController implements Initializable {
+    private Network network = Network.getInstance();
     @FXML
     TextField serverPathToFile;
     @FXML
@@ -28,13 +35,14 @@ public class MainAppController implements Initializable {
     TableView<FileInfo> serverFilesTable;
     @FXML
     ComboBox<String> diskListComboBox;
+    private List<FileInfo> serverFileList;
 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-       HelperGui.prepareFileTable(clientFilesTable);
-       HelperGui.prepareComboBox(diskListComboBox);
-       HelperGui.prepareFileTable(serverFilesTable);
+        HelperGui.prepareFileTable(clientFilesTable);
+        HelperGui.prepareComboBox(diskListComboBox);
+        HelperGui.prepareFileTable(serverFilesTable);
         clientFilesTable.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 enterToDirectory();
@@ -53,24 +61,32 @@ public class MainAppController implements Initializable {
                 delete();
             }
         });
+        Thread t = new Thread(() -> {
+            network.getMainHandler().setServiceCallback(serviceMsg -> {
+                System.out.println(serviceMsg);
+                if (serviceMsg.startsWith("/FileList ")) {
+                    serverFileList = FileService.createFileList(serviceMsg.split(" ", 2)[1]);
+                    Platform.runLater(() -> {
+                        serverFilesTable.getItems().clear();
+                        serverFileList.forEach(o -> serverFilesTable.getItems().add(o));
+                    });
+                    clientFilesTable.sort();
+                }
+            });
+        });
+        t.start();
         updateFilesList(Paths.get(System.getProperty("user.home")));
+        updateServerFileList();
     }
 
-
-    public String getSelectedFileName() {
-        if (!clientFilesTable.isFocused()) {
-            return null;
-        }
-        return clientFilesTable.getSelectionModel().getSelectedItem().getFileName();
-    }
-
-    public String getCurrentPath() {
-        return clientPathToFile.getText();
-    }
 
     public void selectDiskOnAction(ActionEvent actionEvent) {
         ComboBox<String> element = (ComboBox<String>) actionEvent.getSource();
         updateFilesList(Paths.get(element.getSelectionModel().getSelectedItem()));
+    }
+
+    public void updateServerFileList() {
+        FileService.sendCommand(network.getChannel(), "/updateFileList");
     }
 
     // Обновление списка файлов
@@ -112,18 +128,40 @@ public class MainAppController implements Initializable {
         }
     }
 
+    public String getSelectedFileName() {
+        if (clientFilesTable.isFocused()) {
+            return clientFilesTable.getSelectionModel().getSelectedItem().getFileName();
+        } else if (serverFilesTable.isFocused()) {
+            return serverFilesTable.getSelectionModel().getSelectedItem().getFileName();
+        } else {
+            throw new NullPointerException("No one file selected");
+        }
+    }
+
+    public String getCurrentPath() {
+        if (serverFilesTable.isFocused()) {
+            return "";
+        } else  {
+            return clientPathToFile.getText();
+        }
+    }
+
     public Path getSelectedFile() {
         return Paths.get(getCurrentPath(), getSelectedFileName());
     }
 
     // Удаление
-    private void delete()  {
-        try {
-            FileService.deleteFile(getSelectedFile());
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void delete() {
+        if (serverFilesTable.isFocused()) {
+            FileService.sendCommand(network.getChannel(), "/delete " + getSelectedFileName());
+        } else if (clientFilesTable.isFocused()) {
+            try {
+                FileService.deleteFile(getSelectedFile());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            updateFilesList(Paths.get(getCurrentPath()));
         }
-        updateFilesList(Paths.get(getCurrentPath()));
     }
 
     public void btnDeleteFile(ActionEvent actionEvent) throws IOException {
@@ -132,14 +170,27 @@ public class MainAppController implements Initializable {
 
     // Переименование
     private void rename() throws IOException {
-        TextInputDialog dialog = new TextInputDialog(getSelectedFileName());
-        dialog.setTitle("Rename file");
-        dialog.setHeaderText("Enter a new filename");
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent() && !(result.get().equals(getSelectedFileName()))) {
-            FileService.renameFile(getSelectedFile(), result.get());
+        if (serverFilesTable.isFocused()) {
+            String oldFilename = getSelectedFileName();
+            TextInputDialog dialog = new TextInputDialog(getSelectedFileName());
+            dialog.setTitle("Rename file");
+            dialog.setHeaderText("Enter a new filename");
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                FileService.sendCommand(network.getChannel(), "/rename " + oldFilename + " " + result.get());
+            }
+
+        } else if (clientFilesTable.isFocused()) {
+            Path oldFile = getSelectedFile();
+            TextInputDialog dialog = new TextInputDialog(getSelectedFileName());
+            dialog.setTitle("Rename file");
+            dialog.setHeaderText("Enter a new filename");
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                FileService.renameFile(oldFile, result.get());
+            }
+            updateFilesList(Paths.get(getCurrentPath()));
         }
-        updateFilesList(Paths.get(getCurrentPath()));
     }
 
     public void btnRenameFile(ActionEvent actionEvent) throws IOException {
@@ -171,7 +222,7 @@ public class MainAppController implements Initializable {
     }
 
     // Перемещение. Сначала надо нажать скопировать чтобы поместить файл или папку в буфер.
-    private void move()  {
+    private void move() {
         try {
             FileService.move(Paths.get(getCurrentPath()));
         } catch (IOException e) {
@@ -187,6 +238,7 @@ public class MainAppController implements Initializable {
 
 
     public void btnExitOnAction(ActionEvent actionEvent) {
+        network.close();
         Platform.exit();
     }
 
@@ -204,4 +256,21 @@ public class MainAppController implements Initializable {
     }
 
 
+    public void btnRefreshClientFileList(ActionEvent actionEvent) {
+        updateFilesList(Paths.get(getCurrentPath()));
+    }
+
+    public void btnRefreshServerFileList(ActionEvent actionEvent) {
+        updateServerFileList();
+    }
+
+
+    public void btnUpload(ActionEvent actionEvent) throws Exception {
+        FileService.uploadFile(network.getChannel(), getSelectedFile(), null);
+    }
+
+    public void btnDownload(ActionEvent actionEvent) {
+        network.getMainHandler().setCurrentPath(Path.of(getCurrentPath()));
+        FileService.sendCommand(network.getChannel(), "/download " + getSelectedFileName());
+    }
 }

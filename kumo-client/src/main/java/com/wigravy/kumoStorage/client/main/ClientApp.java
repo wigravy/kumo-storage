@@ -2,6 +2,7 @@ package com.wigravy.kumoStorage.client.main;
 
 
 import com.wigravy.kumoStorage.client.network.Network;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.JavaFXBuilderFactory;
 import javafx.scene.Parent;
@@ -31,7 +32,7 @@ public class ClientApp extends Application {
 
     public void gotoMainApp() {
         try {
-            replaceSceneContent("/fxml/MainAppController.fxml");
+            replaceSceneContent("/fxml/MainApp.fxml");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -63,6 +64,10 @@ public class ClientApp extends Application {
     public void start(Stage primaryStage) throws IOException {
         Scene scene = new Scene(new StackPane());
         stage = primaryStage;
+        primaryStage.setOnCloseRequest(event -> {
+            network.close();
+            Platform.exit();
+        });
         gotoLogin();
         primaryStage.show();
     }

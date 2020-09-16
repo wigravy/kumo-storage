@@ -17,7 +17,7 @@
         <VBox alignment="center" HBox.hgrow="ALWAYS">
             <HBox spacing="4">
                 <Button minHeight="35" onAction="#btnUpPathDirectoryOnAction" text="Up" />
-                <Button minHeight="35" text="Refresh" />
+                <Button minHeight="35" text="Refresh" onAction="#btnRefreshServerFileList"/>
                 <TextField fx:id="serverPathToFile" editable="false" minHeight="35" HBox.hgrow="ALWAYS" />
                 <VBox.margin>
                     <Insets bottom="5.0" />
@@ -29,7 +29,7 @@
             <HBox spacing="4">
                 <ComboBox fx:id="diskListComboBox" minHeight="35" onAction="#selectDiskOnAction" />
                 <Button minHeight="35" onAction="#btnUpPathDirectoryOnAction" text="Up" />
-                <Button minHeight="35" text="Refresh" />
+                <Button minHeight="35" text="Refresh" onAction="#btnRefreshClientFileList"/>
                 <TextField fx:id="clientPathToFile" editable="false" minHeight="35" HBox.hgrow="ALWAYS" />
                 <VBox.margin>
                     <Insets bottom="5.0" />
@@ -43,8 +43,8 @@
       </VBox.margin>
     </HBox>
     <HBox spacing="4">
-        <Button focusTraversable="false" maxWidth="Infinity" text="Upload" HBox.hgrow="ALWAYS" />
-        <Button focusTraversable="false" maxWidth="Infinity" text="Download" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" text="Upload" onAction="#btnUpload" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" text="Download" onAction="#btnDownload" HBox.hgrow="ALWAYS" />
 <!--        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnCopy" text="Copy" HBox.hgrow="ALWAYS" />-->
 <!--        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnPaste" text="Paste" HBox.hgrow="ALWAYS" />-->
 <!--        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnMove" text="Move" HBox.hgrow="ALWAYS" />-->

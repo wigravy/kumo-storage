@@ -8,14 +8,20 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.Getter;
 
 public class Network {
-    private final String HOST;
-    private final int PORT;
+    private String HOST;
+    private int PORT;
     @Getter
     private SocketChannel channel;
     @Getter
     private MainHandler mainHandler = new MainHandler();
+    private static Network instance;
+
+    public static Network getInstance() {
+        return instance;
+    }
 
     public Network(String host, int port) {
+        instance = this;
         this.HOST = host;
         this.PORT = port;
         Thread thread = new Thread(() -> {
