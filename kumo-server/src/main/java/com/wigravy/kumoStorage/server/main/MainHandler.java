@@ -47,6 +47,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     System.out.println("Файл стучится");
                     currentState = State.FILE_NAME_LENGTH;
                 } else {
+                    currentState = State.IDLE;
                     throw new RuntimeException("Unknown byte command arrived: " + readByte);
                 }
             }
@@ -71,13 +72,14 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
             if (currentState == State.COMMAND_DO) {
                 String[] command = stringBuilder.toString().split(" ");
                 if (command[0].equals("/authorization")) {
-//                currentPath = Path.of("storage", "wigravy");
+//                    сurrentPath = Path.of("storage", "wigravy");
                     FileService.sendCommand(ctx.channel(), "/authorization OK");
-//                        currentPath = CommandService.authorization(command[1], command[2], ctx.channel());
+//                    currentPath = CommandService.authorization(command[1], command[2], ctx.channel());
                     currentState = State.IDLE;
                 } else if (command[0].equals("/download")) {
                     CommandService.downloadFile(ctx.channel(), currentPath.resolve(command[1]));
                     currentState = State.IDLE;
+                    // TODO: сделать вход в директории на клиенте
                 } else if (command[0].equals("/enterToDirectory")) {
                     currentPath = currentPath.resolve(command[1]);
                     currentState = State.FILE_LIST;
@@ -86,16 +88,16 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 } else if (command[0].equals("/delete")) {
                     FileService.deleteFile(currentPath.resolve(command[1]));
                     currentState = State.FILE_LIST;
+                    // TODO: возможность переименовывать имена с пробелом. Как вариант реализовать отдельный байт для этого и удаления файла
                 } else if (command[0].equals("/rename")) {
                     System.out.println(currentPath.resolve(" путь до файла: " + command[1]) + " новое имя файла: " + command[2]);
                     FileService.renameFile(currentPath.resolve(command[1]), command[2]);
                     currentState = State.FILE_LIST;
                 } else {
+                    // TODO: сделать свой тип ошибки
                     throw new RuntimeException("Unknown command: " + stringBuilder.toString());
                 }
-
             }
-
             /*
              **      Стадия получения файла
              */
@@ -108,12 +110,11 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
             }
 
             if (currentState == State.NAME) {
-
                 while (buf.readableBytes() >= filenameLength) {
                     byte[] filenameBytes = new byte[filenameLength];
                     buf.readBytes(filenameBytes);
                     String filename = new String(filenameBytes, StandardCharsets.UTF_8);
-                    File file = new File(currentPath + "/" + filename);
+                    File file = new File(currentPath.toString() + "/" + filename);
                     out = new BufferedOutputStream(new FileOutputStream(file));
                     currentState = State.FILE_SIZE;
                     System.out.println("Имя файла: " + filename);
@@ -129,16 +130,21 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
             }
 
             if (currentState == State.FILE) {
-                long receivedFileSize = 0;
-                while (buf.readableBytes() > 0) {
-                    out.write(buf.readByte());
-                    receivedFileSize++;
-                    if (fileSize == receivedFileSize) {
-                        System.out.println("Готово");
-                        currentState = State.FILE_LIST;
-                        out.close();
-                        break;
+                long receivedFileSize = 0L;
+                try {
+                    while (buf.readableBytes() > 0) {
+                        out.write(buf.readByte());
+                        receivedFileSize++;
+                        if (fileSize == receivedFileSize) {
+                            currentState = State.FILE_LIST;
+                            out.close();
+                            break;
+                        }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    currentState = State.IDLE;
+                    out.close();
                 }
             }
             /*
@@ -159,26 +165,26 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-        @Override
-        public void channelActive (ChannelHandlerContext ctx) throws Exception {
-            System.out.println(ctx.channel().remoteAddress() + " channel is connected.");
-        }
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) {
+        System.out.println(ctx.channel().remoteAddress() + " channel is connected.");
+    }
 
-        @Override
-        public void channelInactive (ChannelHandlerContext ctx) throws Exception {
-            System.out.println(ctx.channel().remoteAddress() + " channel is disconnected.");
-        }
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        System.out.println(ctx.channel().remoteAddress() + " channel is disconnected.");
+    }
 
-        @Override
-        public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            cause.printStackTrace();
-            if (ctx.channel().isActive()) {
-                FileService.sendCommand(ctx.channel(), "ERR: " +
-                        cause.getClass().getSimpleName() + ": " +
-                        cause.getMessage() + '\n');
-            }
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        cause.printStackTrace();
+        if (ctx.channel().isActive()) {
+            FileService.sendCommand(ctx.channel(), "ERR: " +
+                    cause.getClass().getSimpleName() + ": " +
+                    cause.getMessage() + '\n');
         }
     }
+}
 
 
 
