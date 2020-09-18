@@ -28,7 +28,7 @@ public class FileService {
 
     // Отправка файла. Оптимизировано: размер файлового буфера генерируется в самом начале под размер всех последующих команд.
 
-    public static void uploadFile(Channel channel, Path path, FutureListener listener) throws Exception {
+    public static void uploadFile(Channel channel, Path path, FutureListener listener) {
         try {
             System.out.println(path.toString());
             fileRegion = new DefaultFileRegion(new FileInputStream(path.toFile()).getChannel(), 0, Files.size(path));

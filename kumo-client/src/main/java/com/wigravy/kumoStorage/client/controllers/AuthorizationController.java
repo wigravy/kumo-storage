@@ -3,7 +3,6 @@ package com.wigravy.kumoStorage.client.controllers;
 
 import com.wigravy.kumoStorage.client.main.ClientApp;
 import com.wigravy.kumoStorage.common.utils.FileService;
-import com.wigravy.kumoStorage.common.utils.ServiceMessage;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -61,7 +60,7 @@ public class AuthorizationController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         Thread t = new Thread(() -> {
-            network.getMainHandler().setAuthCallback(serviceMsg -> {
+            network.getMainHandler().setCallback(serviceMsg -> {
                 System.out.println(serviceMsg);
                 if (serviceMsg.equals("OK")) {
                     Platform.runLater(this::toMain);

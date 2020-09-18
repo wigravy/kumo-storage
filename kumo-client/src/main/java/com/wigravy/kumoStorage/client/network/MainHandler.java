@@ -28,9 +28,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
     private StringBuilder stringBuilder = new StringBuilder();
     private BufferedOutputStream out;
     @Setter
-    private ServiceMessage authCallback;
-    @Setter
-    private ServiceMessage serviceCallback;
+    private ServiceMessage callback;
     @Setter
     private Path currentPath;
 
@@ -74,9 +72,9 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
             if (currentState == State.COMMAND_DO) {
                 String[] command = stringBuilder.toString().split(" ");
                 if (command[0].equals("/authorization")) {
-                    authCallback.callback(command[1]);
+                    callback.callback(command[1]);
                 } else if (command[0].equals("/FileList")) {
-                    serviceCallback.callback(stringBuilder.toString());
+                    callback.callback(stringBuilder.toString());
                 } else {
                     throw new RuntimeException("Unknown command: " + stringBuilder.toString());
                 }
@@ -100,7 +98,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     byte[] filenameBytes = new byte[filenameLength];
                     buf.readBytes(filenameBytes);
                     String filename = new String(filenameBytes, StandardCharsets.UTF_8);
-                    File file = new File(currentPath + "/" + filename);
+                    File file = new File(currentPath + " " + filename);
                     out = new BufferedOutputStream(new FileOutputStream(file));
                     currentState = State.FILE_SIZE;
                     System.out.println("Имя файла: " + filename);

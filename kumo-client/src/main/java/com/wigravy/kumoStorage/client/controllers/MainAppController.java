@@ -1,8 +1,6 @@
 package com.wigravy.kumoStorage.client.controllers;
 
-import com.wigravy.kumoStorage.client.main.ClientApp;
 import com.wigravy.kumoStorage.client.network.Network;
-import com.wigravy.kumoStorage.common.utils.ServiceMessage;
 import javafx.application.Platform;
 import com.wigravy.kumoStorage.common.utils.FileInfo;
 
@@ -13,14 +11,12 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import com.wigravy.kumoStorage.common.utils.FileService;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class MainAppController implements Initializable {
@@ -53,16 +49,16 @@ public class MainAppController implements Initializable {
                 enterToDirectory();
             } else if (event.getCode() == KeyCode.BACK_SPACE) {
                 upPathDirectory();
-            } else if (event.getCode() == KeyCode.C && event.isControlDown()) {
-                copy();
-            } else if (event.getCode() == KeyCode.V && event.isControlDown()) {
-                paste();
+//            } else if (event.getCode() == KeyCode.C && event.isControlDown()) {
+//                copy();
+//            } else if (event.getCode() == KeyCode.V && event.isControlDown()) {
+//                paste();
             } else if (event.getCode() == KeyCode.DELETE) {
                 delete();
             }
         });
         Thread t = new Thread(() -> {
-            network.getMainHandler().setServiceCallback(serviceMsg -> {
+            network.getMainHandler().setCallback(serviceMsg -> {
                 System.out.println(serviceMsg);
                 if (serviceMsg.startsWith("/FileList ")) {
                     serverFileList = FileService.createFileList(serviceMsg.split(" ", 2)[1]);
@@ -94,7 +90,8 @@ public class MainAppController implements Initializable {
         try {
             clientPathToFile.setText(path.normalize().toAbsolutePath().toString());
             clientFilesTable.getItems().clear();
-            clientFilesTable.getItems().addAll(Files.list(path)
+            clientFilesTable.getItems()
+                    .addAll(Files.list(path)
                     .map(FileInfo::new)
                     .collect(Collectors.toList()));
             clientFilesTable.sort();
@@ -138,12 +135,9 @@ public class MainAppController implements Initializable {
         }
     }
 
+
     public String getCurrentPath() {
-        if (serverFilesTable.isFocused()) {
-            return "";
-        } else  {
-            return clientPathToFile.getText();
-        }
+        return clientPathToFile.getText();
     }
 
     public Path getSelectedFile() {
@@ -170,6 +164,7 @@ public class MainAppController implements Initializable {
 
     // Переименование
     private void rename() throws IOException {
+        // TODO: уменьшить код, вынести всплывающее окно в отдельный метод
         if (serverFilesTable.isFocused()) {
             String oldFilename = getSelectedFileName();
             TextInputDialog dialog = new TextInputDialog(getSelectedFileName());
@@ -198,43 +193,43 @@ public class MainAppController implements Initializable {
     }
 
     // Копирование
-    private void copy() {
-        FileService.copyFile(getSelectedFile());
-    }
-
-    public void btnCopy(ActionEvent actionEvent) {
-        copy();
-    }
+//    private void copy() {
+//        FileService.copyFile(getSelectedFile());
+//    }
+//
+//    public void btnCopy(ActionEvent actionEvent) {
+//        copy();
+//    }
 
     // Вставка
-    private void paste() {
-        try {
-            FileService.pasteFile(Paths.get(getCurrentPath()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        updateFilesList(Paths.get(getCurrentPath()));
-    }
-
-
-    public void btnPaste(ActionEvent actionEvent) {
-        paste();
-    }
+//    private void paste() {
+//        try {
+//            FileService.pasteFile(Paths.get(getCurrentPath()));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        updateFilesList(Paths.get(getCurrentPath()));
+//    }
+//
+//
+//    public void btnPaste(ActionEvent actionEvent) {
+//        paste();
+//    }
 
     // Перемещение. Сначала надо нажать скопировать чтобы поместить файл или папку в буфер.
-    private void move() {
-        try {
-            FileService.move(Paths.get(getCurrentPath()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        updateFilesList(Paths.get(getCurrentPath()));
-    }
-
-
-    public void btnMove(ActionEvent actionEvent) {
-        move();
-    }
+//    private void move() {
+//        try {
+//            FileService.move(Paths.get(getCurrentPath()));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        updateFilesList(Paths.get(getCurrentPath()));
+//    }
+//
+//
+//    public void btnMove(ActionEvent actionEvent) {
+//        move();
+//    }
 
 
     public void btnExitOnAction(ActionEvent actionEvent) {
@@ -242,18 +237,18 @@ public class MainAppController implements Initializable {
         Platform.exit();
     }
 
-    public void btnShowHelp(ActionEvent actionEvent) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Help");
-        alert.setHeaderText("Hotkeys");
-        alert.setContentText(
-                "Ctrl + c : copy\n" +
-                        "Ctrl + v : paste\n" +
-                        "Enter : Enter to directory\n" +
-                        "Delete : Delete file or directory\n" +
-                        "Backspace: Enter to upper directory");
-        alert.showAndWait();
-    }
+//    public void btnShowHelp(ActionEvent actionEvent) {
+//        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+//        alert.setTitle("Help");
+//        alert.setHeaderText("Hotkeys");
+//        alert.setContentText(
+//                "Ctrl + c : copy\n" +
+//                        "Ctrl + v : paste\n" +
+//                        "Enter : Enter to directory\n" +
+//                        "Delete : Delete file or directory\n" +
+//                        "Backspace: Enter to upper directory");
+//        alert.showAndWait();
+//    }
 
 
     public void btnRefreshClientFileList(ActionEvent actionEvent) {
