@@ -48,7 +48,8 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 } else if (readByte == ListSignalBytes.FILE_SIGNAL_BYTE) {
                     currentState = State.FILE_NAME_LENGTH;
                 } else {
-                    throw new RuntimeException("Unknown byte command arrived: " + readByte);
+                    //TODO: сделать своё исключение
+                    throw new IllegalArgumentException("Unknown byte command arrived: " + readByte);
                 }
             }
             /*
@@ -76,6 +77,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 } else if (command[0].equals("/FileList")) {
                     callback.callback(stringBuilder.toString());
                 } else {
+                    // TODO: сделать своё исключение
                     throw new RuntimeException("Unknown command: " + stringBuilder.toString());
                 }
                 currentState = State.IDLE;
@@ -93,12 +95,11 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
             }
 
             if (currentState == State.NAME) {
-
                 while (buf.readableBytes() >= filenameLength) {
                     byte[] filenameBytes = new byte[filenameLength];
                     buf.readBytes(filenameBytes);
                     String filename = new String(filenameBytes, StandardCharsets.UTF_8);
-                    File file = new File(currentPath + " " + filename);
+                    File file = new File(currentPath.toString() + "/" + filename);
                     out = new BufferedOutputStream(new FileOutputStream(file));
                     currentState = State.FILE_SIZE;
                     System.out.println("Имя файла: " + filename);
