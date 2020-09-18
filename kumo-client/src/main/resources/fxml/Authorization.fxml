@@ -4,27 +4,29 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<VBox alignment="TOP_CENTER" minHeight="700" minWidth="500"
-      stylesheets="@../css/Authorization.css"
-      xmlns="http://javafx.com/javafx/10.0.2-internal"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="controllers.AuthorizationController">
-    <ImageView fitHeight="150" fitWidth="200">
-        <Image url="@../img/kumo_logo_big.png" />
+<VBox fx:id="back" alignment="TOP_CENTER" minHeight="700" minWidth="500" stylesheets="@../css/Authorization.css"
+      xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.wigravy.kumoStorage.client.controllers.AuthorizationController">
+    <ImageView fitHeight="150" fitWidth="300">
+        <Image url="@../img/cloud_logo.png" />
       <VBox.margin>
          <Insets top="40.0" />
       </VBox.margin>
     </ImageView>
-    <Label text="Log in to continue" textAlignment="CENTER">
+    <Label fx:id="ApplicationText" maxWidth="250" text="Welcome To Kumo Storage" textAlignment="CENTER" wrapText="true">
       <VBox.margin>
          <Insets top="40.0" />
-      </VBox.margin></Label>
-    <TextField fx:id="loginField" maxWidth="300" minWidth="200" promptText="Enter your username">
+      </VBox.margin>
+      <font>
+         <Font size="24.0" />
+      </font></Label>
+    <TextField fx:id="loginField" maxWidth="300" minWidth="200" promptText="Enter your username" onAction="#btnLoginOnAction">
       <VBox.margin>
          <Insets top="20.0" />
       </VBox.margin></TextField>
-    <PasswordField fx:id="passwordField" maxWidth="300" minWidth="200" promptText="Enter your password">
+    <PasswordField fx:id="passwordField" maxWidth="300" minWidth="200" promptText="Enter your password" onAction="#btnLoginOnAction">
       <VBox.margin>
          <Insets top="15.0" />
       </VBox.margin>
@@ -43,8 +45,12 @@
       <VBox.margin>
          <Insets top="15.0" />
       </VBox.margin></CheckBox>
-    <Button fx:id="loginButton" minHeight="20" minWidth="100" text="Log in" onAction="#btnLoginOnAction">
+    <Button fx:id="loginButton" minHeight="40" minWidth="200" onAction="#btnLoginOnAction" text="Log in">
       <VBox.margin>
          <Insets top="20.0" />
       </VBox.margin></Button>
+    <Button fx:id="ExitButton" minHeight="40" minWidth="200" onAction="#btnExitOnAction" text="Exit">
+        <VBox.margin>
+            <Insets top="20.0" />
+        </VBox.margin></Button>
 </VBox>

@@ -1,0 +1,70 @@
+@font-face {
+    font-family: "Roboto Mono";
+    src: url("fonts/RobotoMono-VariableFont_wght.ttf");
+    font-family: "Soft";
+    src: url("fonts/softBold.ttf");
+}
+
+.menu {
+    -fx-font-family: "Roboto Mono";
+    -fx-font-size: 14;
+}
+
+#serverlabel.label {
+    -fx-font-family: "Soft";
+    -fx-font-size: 24;
+    -fx-text-fill: #0077c2;
+}
+
+#pclabel.label {
+    -fx-font-family: "Soft";
+    -fx-font-size: 24;
+    -fx-text-fill: #0077c2;
+}
+
+.menu-item {
+    -fx-font-family: "Roboto Mono";
+    -fx-font-size: 14;
+}
+
+.table-view {
+    -fx-font-family: "Roboto Mono";
+    -fx-font-size: 14;
+}
+
+.text-field {
+    -fx-font-family: "Roboto Mono";
+    -fx-font-size: 15;
+    -fx-text-fill: #ffffff;
+    -fx-background-color: #42a5f5;
+}
+
+.combo-box {
+    -fx-font-family: "Roboto Mono";
+    -fx-font-size: 15;
+    -fx-background-color: #42a5f5;
+    -fx-text-fill: #ffffff;
+    -fx-highlight-text-fill: #ffffff;
+}
+
+.button {
+    -fx-font-family: "Roboto Mono";
+    -fx-font-size: 15;
+    -fx-background-color: #42a5f5;
+    -fx-text-fill: #ffffff;
+}
+
+.button:hover {
+    -fx-font-family: "Roboto Mono";
+    -fx-font-size: 15;
+    -fx-background-color: #67c4f6;
+    -fx-text-fill: #ffffff;
+}
+
+#ExitBtn.button {
+    -fx-background-color: #0077c2;
+}
+
+#ExitBtn.button:hover {
+    -fx-background-color: #0047c2;
+}

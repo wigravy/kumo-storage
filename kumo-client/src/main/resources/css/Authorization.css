@@ -1,12 +1,36 @@
-.button {
-    -fx-background-color: #009825;
-    -fx-effect: dropshadow(three-pass-box, #858585, 5, 0.0, 0, 1);
-    -fx-text-fill: #f2f8f2;
-    -fx-font-size: 16;
+@font-face {
+    font-family: "Soft";
+    src: url("fonts/softBold.ttf");
 }
 
-.button:hover {
-    -fx-background-color: #00d025;
+
+#ApplicationText.label {
+    -fx-font-family: "Soft";
+    -fx-font-size: 36;
+    -fx-text-fill: #80d6ff;
+}
+
+#loginButton.button {
+    -fx-background-color: #80d6ff;
+    -fx-effect: dropshadow(three-pass-box, #858585, 5, 0.0, 0, 1);
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 18;
+}
+
+#loginButton.button:hover {
+    -fx-background-color: #67c4f6;
+    -fx-text-fill: #ffffff;
+}
+
+#ExitButton.button {
+    -fx-background-color: #0077c2;
+    -fx-effect: dropshadow(three-pass-box, #858585, 5, 0.0, 0, 1);
+    -fx-text-fill: #f2f8f2;
+    -fx-font-size: 18;
+}
+
+#ExitButton.button:hover {
+    -fx-background-color: #2c5a78;
     -fx-text-fill: #f2f8f2;
 }
 
@@ -15,12 +39,10 @@
 }
 
 .text-field {
-    -fx-border-width: 2;
-    -fx-font-size: 14;
-}
-
-.text-field:focused {
-    -fx-border-color: gold;
+    -fx-font-size: 15;
+    -fx-background-color: transparent;
+    -fx-border-color: #80d6ff;
+    -fx-border-width: 0px 0px 3px 0px;
 }
 
 .check-box {
