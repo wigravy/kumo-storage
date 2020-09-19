@@ -22,6 +22,7 @@ public class AuthorizationController implements Initializable {
     PasswordField passwordField;
     @FXML
     Button loginButton;
+    FileService fileService = new FileService();
 
 
     public void btnLoginOnAction(ActionEvent event) {
@@ -30,7 +31,7 @@ public class AuthorizationController implements Initializable {
         } else {
             String username = replaceInvalidSymbols(loginField.getText());
             String password = replaceInvalidSymbols(passwordField.getText());
-            FileService.sendCommand(network.getChannel(), String.format("/authorization %s %s", username, password));
+            fileService.sendCommand(network.getChannel(), String.format("/authorization\n%s\n%s", username, password));
         }
     }
 
@@ -65,7 +66,7 @@ public class AuthorizationController implements Initializable {
                 if (serviceMsg.equals("OK")) {
                     Platform.runLater(this::toMain);
                 } else {
-                    loginError();
+                    Platform.runLater(this::loginError);
                 }
             });
         });

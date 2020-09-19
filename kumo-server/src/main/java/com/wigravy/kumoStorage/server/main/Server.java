@@ -38,7 +38,7 @@ public final class Server {
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        public void initChannel(SocketChannel channel) throws Exception {
+                        public void initChannel(SocketChannel channel) {
                             ChannelPipeline pipeline = channel.pipeline();
                             pipeline.addLast(new MainHandler());
                         }

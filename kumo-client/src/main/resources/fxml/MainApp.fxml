@@ -16,7 +16,7 @@
     <HBox spacing="5.0" VBox.vgrow="ALWAYS">
         <VBox alignment="center" HBox.hgrow="ALWAYS">
             <HBox spacing="4">
-                <Button minHeight="35" onAction="#btnUpPathDirectoryOnAction" text="Up" />
+                <Button minHeight="35" onAction="#btnUpServerPathDirectoryOnAction" text="Up" />
                 <Button minHeight="35" text="Refresh" onAction="#btnRefreshServerFileList"/>
                 <TextField fx:id="serverPathToFile" editable="false" minHeight="35" HBox.hgrow="ALWAYS" />
                 <VBox.margin>
@@ -43,11 +43,7 @@
       </VBox.margin>
     </HBox>
     <HBox spacing="4">
-        <Button focusTraversable="false" maxWidth="Infinity" text="Upload" onAction="#btnUpload" HBox.hgrow="ALWAYS" />
         <Button focusTraversable="false" maxWidth="Infinity" text="Download" onAction="#btnDownload" HBox.hgrow="ALWAYS" />
-<!--        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnCopy" text="Copy" HBox.hgrow="ALWAYS" />-->
-<!--        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnPaste" text="Paste" HBox.hgrow="ALWAYS" />-->
-<!--        <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnMove" text="Move" HBox.hgrow="ALWAYS" />-->
         <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnRenameFile" text="Rename" HBox.hgrow="ALWAYS" />
         <Button focusTraversable="false" maxWidth="Infinity" onAction="#btnDeleteFile" text="Delete" HBox.hgrow="ALWAYS" />
         <Button fx:id="ExitBtn" focusTraversable="false" maxWidth="Infinity" onAction="#btnExitOnAction" text="Exit" HBox.hgrow="ALWAYS" />

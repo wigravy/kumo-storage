@@ -8,14 +8,12 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import com.wigravy.kumoStorage.common.utils.FileInfo;
 
-import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 
 /*
- ** Код для инициализации таблиц с файлами Сервера и Клиента.
+** Код для инициализации таблиц с файлами Сервера и Клиента.
  */
 public class HelperGui {
     public static void prepareFileTable(TableView<FileInfo> tableView) {
@@ -60,10 +58,10 @@ public class HelperGui {
     }
 
     public static void prepareComboBox(ComboBox<String> comboBox) {
-        for (File file : File.listRoots()) {
-            comboBox.getItems().add(file.getName());
+        for (Path path : FileSystems.getDefault().getRootDirectories()) {
+            comboBox.getItems().add(path.toString());
         }
-
+        comboBox.getSelectionModel().select(0);
     }
 
 }
