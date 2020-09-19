@@ -32,6 +32,7 @@ public class MainAppController implements Initializable {
     @FXML
     ComboBox<String> diskListComboBox;
     private List<FileInfo> serverFileList;
+    FileService fileService = new FileService();
 
 
     @Override
@@ -61,7 +62,7 @@ public class MainAppController implements Initializable {
             network.getMainHandler().setCallback(serviceMsg -> {
                 System.out.println(serviceMsg);
                 if (serviceMsg.startsWith("/FileList ")) {
-                    serverFileList = FileService.createFileList(serviceMsg.split(" ", 2)[1]);
+                    serverFileList = fileService.createFileList(serviceMsg.split(" ", 2)[1]);
                     Platform.runLater(() -> {
                         serverFilesTable.getItems().clear();
                         serverFileList.forEach(o -> serverFilesTable.getItems().add(o));
@@ -82,7 +83,7 @@ public class MainAppController implements Initializable {
     }
 
     public void updateServerFileList() {
-        FileService.sendCommand(network.getChannel(), "/updateFileList");
+        fileService.sendCommand(network.getChannel(), "/updateFileList");
     }
 
     // Обновление списка файлов
@@ -147,10 +148,10 @@ public class MainAppController implements Initializable {
     // Удаление
     private void delete() {
         if (serverFilesTable.isFocused()) {
-            FileService.sendCommand(network.getChannel(), "/delete " + getSelectedFileName());
+            fileService.sendCommand(network.getChannel(), "/delete " + getSelectedFileName());
         } else if (clientFilesTable.isFocused()) {
             try {
-                FileService.deleteFile(getSelectedFile());
+                fileService.deleteFile(getSelectedFile());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -172,7 +173,7 @@ public class MainAppController implements Initializable {
             dialog.setHeaderText("Enter a new filename");
             Optional<String> result = dialog.showAndWait();
             if (result.isPresent()) {
-                FileService.sendCommand(network.getChannel(), "/rename " + oldFilename + " " + result.get());
+                fileService.sendCommand(network.getChannel(), "/rename " + oldFilename + " " + result.get());
             }
 
         } else if (clientFilesTable.isFocused()) {
@@ -182,7 +183,7 @@ public class MainAppController implements Initializable {
             dialog.setHeaderText("Enter a new filename");
             Optional<String> result = dialog.showAndWait();
             if (result.isPresent()) {
-                FileService.renameFile(oldFile, result.get());
+                fileService.renameFile(oldFile, result.get());
             }
             updateFilesList(Paths.get(getCurrentPath()));
         }
@@ -261,11 +262,11 @@ public class MainAppController implements Initializable {
 
 
     public void btnUpload(ActionEvent actionEvent) throws Exception {
-        FileService.uploadFile(network.getChannel(), getSelectedFile(), null);
+        fileService.uploadFile(network.getChannel(), getSelectedFile(), null);
     }
 
     public void btnDownload(ActionEvent actionEvent) {
         network.getMainHandler().setCurrentPath(Path.of(getCurrentPath()));
-        FileService.sendCommand(network.getChannel(), "/download " + getSelectedFileName());
+        fileService.sendCommand(network.getChannel(), "/download " + getSelectedFileName());
     }
 }

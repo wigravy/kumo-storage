@@ -1,7 +1,6 @@
 package com.wigravy.kumoStorage.client.network;
 
 
-
 import com.wigravy.kumoStorage.common.utils.ServiceMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -60,27 +59,28 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     commandLength = buf.readInt();
                     currentState = State.COMMAND_READ;
                 }
-            }
-            if (currentState == State.COMMAND_READ) {
-                stringBuilder = new StringBuilder();
-                while (buf.readableBytes() > 0 && commandLength != 0) {
-                    commandLength--;
-                    stringBuilder.append((char) buf.readByte());
-                }
-                currentState = State.COMMAND_DO;
-            }
 
-            if (currentState == State.COMMAND_DO) {
-                String[] command = stringBuilder.toString().split(" ");
-                if (command[0].equals("/authorization")) {
-                    callback.callback(command[1]);
-                } else if (command[0].equals("/FileList")) {
-                    callback.callback(stringBuilder.toString());
-                } else {
-                    // TODO: сделать своё исключение
-                    throw new RuntimeException("Unknown command: " + stringBuilder.toString());
+                if (currentState == State.COMMAND_READ) {
+                    stringBuilder = new StringBuilder();
+                    while (buf.readableBytes() > 0 && commandLength != 0) {
+                        commandLength--;
+                        stringBuilder.append((char) buf.readByte());
+                    }
+                    currentState = State.COMMAND_DO;
                 }
-                currentState = State.IDLE;
+
+                if (currentState == State.COMMAND_DO) {
+                    String[] command = stringBuilder.toString().split(" ");
+                    if (command[0].equals("/authorization")) {
+                        callback.callback(command[1]);
+                    } else if (command[0].equals("/FileList")) {
+                        callback.callback(stringBuilder.toString());
+                    } else {
+                        // TODO: сделать своё исключение
+                        throw new RuntimeException("Unknown command: " + stringBuilder.toString());
+                    }
+                    currentState = State.IDLE;
+                }
             }
 
             /*
@@ -92,38 +92,39 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     currentState = State.NAME;
                     System.out.println("Длинна имени файла: " + filenameLength);
                 }
-            }
 
-            if (currentState == State.NAME) {
-                while (buf.readableBytes() >= filenameLength) {
-                    byte[] filenameBytes = new byte[filenameLength];
-                    buf.readBytes(filenameBytes);
-                    String filename = new String(filenameBytes, StandardCharsets.UTF_8);
-                    File file = new File(currentPath.toString() + "/" + filename);
-                    out = new BufferedOutputStream(new FileOutputStream(file));
-                    currentState = State.FILE_SIZE;
-                    System.out.println("Имя файла: " + filename);
+
+                if (currentState == State.NAME) {
+                    while (buf.readableBytes() >= filenameLength) {
+                        byte[] filenameBytes = new byte[filenameLength];
+                        buf.readBytes(filenameBytes);
+                        String filename = new String(filenameBytes, StandardCharsets.UTF_8);
+                        File file = new File(currentPath.toString() + "/" + filename);
+                        out = new BufferedOutputStream(new FileOutputStream(file));
+                        currentState = State.FILE_SIZE;
+                        System.out.println("Имя файла: " + filename);
+                    }
                 }
-            }
 
-            if (currentState == State.FILE_SIZE) {
-                if (buf.readableBytes() >= 8) {
-                    fileSize = buf.readLong();
-                    currentState = State.FILE;
-                    System.out.println("Размер файла: " + fileSize);
+                if (currentState == State.FILE_SIZE) {
+                    if (buf.readableBytes() >= 8) {
+                        fileSize = buf.readLong();
+                        currentState = State.FILE;
+                        System.out.println("Размер файла: " + fileSize);
+                    }
                 }
-            }
 
-            if (currentState == State.FILE) {
-                long receivedFileSize = 0;
-                while (buf.readableBytes() > 0) {
-                    out.write(buf.readByte());
-                    receivedFileSize++;
-                    if (fileSize == receivedFileSize) {
-                        System.out.println("Готово");
-                        currentState = State.FILE_LIST;
-                        out.close();
-                        break;
+                if (currentState == State.FILE) {
+                    long receivedFileSize = 0;
+                    while (buf.readableBytes() > 0) {
+                        out.write(buf.readByte());
+                        receivedFileSize++;
+                        if (fileSize == receivedFileSize) {
+                            System.out.println("Готово");
+                            currentState = State.FILE_LIST;
+                            out.close();
+                            break;
+                        }
                     }
                 }
             }

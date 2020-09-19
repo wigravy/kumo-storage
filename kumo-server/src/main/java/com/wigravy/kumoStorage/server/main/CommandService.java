@@ -14,7 +14,9 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 public class CommandService {
-    public static Path authorization(String login, String password, Channel channel) {
+    FileService fileService = new FileService();
+
+    public Path authorization(String login, String password, Channel channel) {
         boolean isAuthorized = false;
         try {
             SecureRandom random = new SecureRandom();
@@ -30,16 +32,16 @@ public class CommandService {
             e.printStackTrace();
         }
         if (isAuthorized) {
-            FileService.sendCommand(channel,"/authorization OK");
+            fileService.sendCommand(channel,"/authorization OK");
             return Authorization.getUserPath(login);
         } else {
-            FileService.sendCommand(channel,"/authorization BAD");
+            fileService.sendCommand(channel,"/authorization BAD");
             return null;
         }
     }
 
-    public static void downloadFile(Channel channel, Path path) throws Exception {
-        FileService.uploadFile(channel, path, null);
+    public void downloadFile(Channel channel, Path path) throws Exception {
+        fileService.uploadFile(channel, path, null);
     }
 
 

@@ -9,6 +9,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.core.util.JsonUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -16,7 +17,6 @@ import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,11 +25,14 @@ import java.util.stream.Collectors;
 public class MainHandler extends SimpleChannelInboundHandler<Object> {
     private State currentState = State.IDLE;
     private long fileSize = 0L;
+    private long receivedFileSize = 0L;
     private int filenameLength = 0;
     private int commandLength = 0;
     private StringBuilder stringBuilder;
     private BufferedOutputStream out;
     private Path currentPath = Path.of("storage", "wigravy");
+    FileService fileService = new FileService();
+    CommandService commandService = new CommandService();
 
 
     @Override
@@ -42,12 +45,14 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
             if (currentState == State.IDLE) {
                 byte readByte = buf.readByte();
                 if (readByte == ListSignalBytes.CMD_SIGNAL_BYTE) {
+                    log.info(String.format("[ip: %s]: Begins file transfer.", ctx.channel().remoteAddress()));
                     currentState = State.COMMAND;
                 } else if (readByte == ListSignalBytes.FILE_SIGNAL_BYTE) {
-                    System.out.println("Файл стучится");
+                    log.info(String.format("[ip: %s]: Begins file transfer.", ctx.channel().remoteAddress()));
                     currentState = State.FILE_NAME_LENGTH;
                 } else {
                     currentState = State.IDLE;
+                    log.error(String.format("[ip: %s]: Unknown byte command arrived.", ctx.channel().remoteAddress()));
                     throw new RuntimeException("Unknown byte command arrived: " + readByte);
                 }
             }
@@ -73,25 +78,29 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 String[] command = stringBuilder.toString().split(" ");
                 if (command[0].equals("/authorization")) {
 //                    сurrentPath = Path.of("storage", "wigravy");
-                    FileService.sendCommand(ctx.channel(), "/authorization OK");
+                    fileService.sendCommand(ctx.channel(), "/authorization OK");
 //                    currentPath = CommandService.authorization(command[1], command[2], ctx.channel());
                     currentState = State.IDLE;
                 } else if (command[0].equals("/download")) {
-                    CommandService.downloadFile(ctx.channel(), currentPath.resolve(command[1]));
+                    log.info(String.format("[ip: %s]: Send command: Download file", ctx.channel().remoteAddress()));
+                    commandService.downloadFile(ctx.channel(), currentPath.resolve(command[1]));
                     currentState = State.IDLE;
                     // TODO: сделать вход в директории на клиенте
                 } else if (command[0].equals("/enterToDirectory")) {
+                    log.info(String.format("[ip: %s]: Send command: Enter to directory", ctx.channel().remoteAddress()));
                     currentPath = currentPath.resolve(command[1]);
                     currentState = State.FILE_LIST;
                 } else if (command[0].equals("/updateFileList")) {
+                    log.info(String.format("[ip: %s]: Send command: Update file list", ctx.channel().remoteAddress()));
                     currentState = State.FILE_LIST;
                 } else if (command[0].equals("/delete")) {
-                    FileService.deleteFile(currentPath.resolve(command[1]));
+                    log.info(String.format("[ip: %s]: Send command: Delete file", ctx.channel().remoteAddress()));
+                    fileService.deleteFile(currentPath.resolve(command[1]));
                     currentState = State.FILE_LIST;
                     // TODO: возможность переименовывать имена с пробелом. Как вариант реализовать отдельный байт для этого и удаления файла
                 } else if (command[0].equals("/rename")) {
                     System.out.println(currentPath.resolve(" путь до файла: " + command[1]) + " новое имя файла: " + command[2]);
-                    FileService.renameFile(currentPath.resolve(command[1]), command[2]);
+                    fileService.renameFile(currentPath.resolve(command[1]), command[2]);
                     currentState = State.FILE_LIST;
                 } else {
                     // TODO: сделать свой тип ошибки
@@ -125,17 +134,23 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 if (buf.readableBytes() >= 8) {
                     fileSize = buf.readLong();
                     currentState = State.FILE;
-                    System.out.println("Размер файла: " + fileSize);
+                    System.out.println("Общий размер файла: " + fileSize);
                 }
             }
 
             if (currentState == State.FILE) {
-                long receivedFileSize = 0L;
+                System.out.println("Приём файла начался: ");
                 try {
                     while (buf.readableBytes() > 0) {
                         out.write(buf.readByte());
                         receivedFileSize++;
+
+                        if (receivedFileSize % 1000 == 0) System.out.println("Количество байт (принято\\всего): " + receivedFileSize + "\\" + fileSize);
                         if (fileSize == receivedFileSize) {
+                            System.out.println("Количество байт (принято\\всего): " + receivedFileSize + "\\" + fileSize);
+                            System.out.println("Файл принят, текущая стадия: передача списка файлов");
+                            receivedFileSize = 0L;
+                            fileSize = 0L;
                             currentState = State.FILE_LIST;
                             out.close();
                             break;
@@ -159,7 +174,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 for (FileInfo fileInfo : serverFiles) {
                     stringBuilder.append(String.format("%s,%d,%s,%s\n", fileInfo.getFileName(), fileInfo.getSize(), fileInfo.getFileType(), fileInfo.getLastModified()));
                 }
-                FileService.sendCommand(ctx.channel(), "/FileList " + stringBuilder.toString());
+                fileService.sendCommand(ctx.channel(), "/FileList " + stringBuilder.toString());
                 currentState = State.IDLE;
             }
         }
@@ -179,7 +194,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         if (ctx.channel().isActive()) {
-            FileService.sendCommand(ctx.channel(), "ERR: " +
+            fileService.sendCommand(ctx.channel(), "ERR: " +
                     cause.getClass().getSimpleName() + ": " +
                     cause.getMessage() + '\n');
         }
