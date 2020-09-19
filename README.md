@@ -2,6 +2,11 @@
 
 *Это учебный проект, проверяйте код перед использованием!*
 
+![Окно авторизации](https://github.com/wigravy/kumo-storage/blob/master/img/login.png)
+
+![Основное окно с файлами](https://github.com/wigravy/kumo-storage/blob/master/img/mainwindow.png)
+
+
 Kumo-storage (яп. 雲 kumo - облако) это клиент - серверное приложение аналог Dropbox. Оно позволяет хранить файлы и получать к ним доступ с удаленного сервера. 
 
 ## Базовые возможности:
