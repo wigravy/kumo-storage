@@ -9,7 +9,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.core.util.JsonUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -32,7 +31,6 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
     private BufferedOutputStream out;
     private Path currentPath = Path.of("storage", "wigravy");
     FileService fileService = new FileService();
-    CommandService commandService = new CommandService();
 
 
     @Override
@@ -45,10 +43,8 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
             if (currentState == State.IDLE) {
                 byte readByte = buf.readByte();
                 if (readByte == ListSignalBytes.CMD_SIGNAL_BYTE) {
-                    log.info(String.format("[ip: %s]: Begins file transfer.", ctx.channel().remoteAddress()));
                     currentState = State.COMMAND;
                 } else if (readByte == ListSignalBytes.FILE_SIGNAL_BYTE) {
-                    log.info(String.format("[ip: %s]: Begins file transfer.", ctx.channel().remoteAddress()));
                     currentState = State.FILE_NAME_LENGTH;
                 } else {
                     currentState = State.IDLE;
@@ -75,46 +71,64 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
             }
 
             if (currentState == State.COMMAND_DO) {
-                String[] command = stringBuilder.toString().split(" ");
-                if (command[0].equals("/authorization")) {
-//                    сurrentPath = Path.of("storage", "wigravy");
-                    fileService.sendCommand(ctx.channel(), "/authorization OK");
-//                    currentPath = CommandService.authorization(command[1], command[2], ctx.channel());
-                    currentState = State.IDLE;
-                } else if (command[0].equals("/download")) {
-                    log.info(String.format("[ip: %s]: Send command: Download file", ctx.channel().remoteAddress()));
-                    commandService.downloadFile(ctx.channel(), currentPath.resolve(command[1]));
-                    currentState = State.IDLE;
-                    // TODO: сделать вход в директории на клиенте
-                } else if (command[0].equals("/enterToDirectory")) {
-                    log.info(String.format("[ip: %s]: Send command: Enter to directory", ctx.channel().remoteAddress()));
-                    currentPath = currentPath.resolve(command[1]);
-                    currentState = State.FILE_LIST;
-                } else if (command[0].equals("/updateFileList")) {
-                    log.info(String.format("[ip: %s]: Send command: Update file list", ctx.channel().remoteAddress()));
-                    currentState = State.FILE_LIST;
-                } else if (command[0].equals("/delete")) {
-                    log.info(String.format("[ip: %s]: Send command: Delete file", ctx.channel().remoteAddress()));
-                    fileService.deleteFile(currentPath.resolve(command[1]));
-                    currentState = State.FILE_LIST;
-                    // TODO: возможность переименовывать имена с пробелом. Как вариант реализовать отдельный байт для этого и удаления файла
-                } else if (command[0].equals("/rename")) {
-                    System.out.println(currentPath.resolve(" путь до файла: " + command[1]) + " новое имя файла: " + command[2]);
-                    fileService.renameFile(currentPath.resolve(command[1]), command[2]);
-                    currentState = State.FILE_LIST;
-                } else {
-                    // TODO: сделать свой тип ошибки
-                    throw new RuntimeException("Unknown command: " + stringBuilder.toString());
+                String[] command = stringBuilder.toString().split("\n");
+                switch (command[0]) {
+                    case "/authorization":
+                        if (command[1].equals("test") && command[2].equals("test")) {
+                            fileService.sendCommand(ctx.channel(), "/authorization\nOK");
+                        } else {
+                            fileService.sendCommand(ctx.channel(), "/authorization\nBAD");
+                        }
+                        currentState = State.IDLE;
+                        break;
+                    case "/download":
+                        log.info(String.format("[ip: %s]: Send command: Download file", ctx.channel().remoteAddress()));
+                        fileService.uploadFile(ctx.channel(), currentPath.resolve(command[1]), null);
+                        currentState = State.FILE_LIST;
+                        break;
+                    case "/enterToDirectory":
+                        log.info(String.format("[ip: %s]: Send command: Enter to directory %s", ctx.channel().remoteAddress(), command[1]));
+                        currentPath = currentPath.resolve(command[1]);
+                        currentState = State.FILE_LIST;
+                        break;
+                    case "/updateFileList":
+                        log.info(String.format("[ip: %s]: Send command: Update file list", ctx.channel().remoteAddress()));
+                        currentState = State.FILE_LIST;
+                        break;
+                    case "/delete":
+                        log.info(String.format("[ip: %s]: Send command: Delete file %s", ctx.channel().remoteAddress(), command[1]));
+                        fileService.delete(currentPath.resolve(command[1]));
+                        currentState = State.FILE_LIST;
+                        break;
+                    case "/rename":
+                        log.info(String.format("[ip: %s]: Send command: Rename file. Path to file: (%s). New name: (%s).", ctx.channel().remoteAddress(), command[1], command[2]));
+                        fileService.rename(currentPath.resolve(command[1]), command[2]);
+                        currentState = State.FILE_LIST;
+                        break;
+                    case "/upDirectory":
+                        log.info(String.format("[ip: %s]: Send command: Up directory.", ctx.channel().remoteAddress()));
+                        if (currentPath.getParent().toString().equals("storage")) {
+                            currentState = State.IDLE;
+                        } else {
+                            currentPath = currentPath.getParent();
+                            currentState = State.FILE_LIST;
+                        }
+                        break;
+                    default:
+                        currentState = State.IDLE;
+                        throw new IllegalArgumentException("Unknown command: " + stringBuilder.toString());
                 }
             }
             /*
              **      Стадия получения файла
              */
             if (currentState == State.FILE_NAME_LENGTH) {
+                receivedFileSize = 0L;
+                fileSize = 0L;
                 if (buf.readableBytes() >= 4) {
                     filenameLength = buf.readInt();
                     currentState = State.NAME;
-                    System.out.println("Длинна имени файла: " + filenameLength);
+                    log.info(String.format("[ip: %s]: File transaction: Get file name length (%s).", ctx.channel().remoteAddress(), filenameLength));
                 }
             }
 
@@ -126,7 +140,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     File file = new File(currentPath.toString() + "/" + filename);
                     out = new BufferedOutputStream(new FileOutputStream(file));
                     currentState = State.FILE_SIZE;
-                    System.out.println("Имя файла: " + filename);
+                    log.info(String.format("[ip: %s]: File transaction: Get file name (%s)", ctx.channel().remoteAddress(), filename));
                 }
             }
 
@@ -134,30 +148,30 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 if (buf.readableBytes() >= 8) {
                     fileSize = buf.readLong();
                     currentState = State.FILE;
-                    System.out.println("Общий размер файла: " + fileSize);
+                    log.info(String.format("[ip: %s]: File transaction: Get file size (%s).", ctx.channel().remoteAddress(), fileSize));
                 }
             }
 
             if (currentState == State.FILE) {
-                System.out.println("Приём файла начался: ");
                 try {
-                    while (buf.readableBytes() > 0) {
-                        out.write(buf.readByte());
-                        receivedFileSize++;
-
-                        if (receivedFileSize % 1000 == 0) System.out.println("Количество байт (принято\\всего): " + receivedFileSize + "\\" + fileSize);
-                        if (fileSize == receivedFileSize) {
-                            System.out.println("Количество байт (принято\\всего): " + receivedFileSize + "\\" + fileSize);
-                            System.out.println("Файл принят, текущая стадия: передача списка файлов");
-                            receivedFileSize = 0L;
-                            fileSize = 0L;
-                            currentState = State.FILE_LIST;
-                            out.close();
-                            break;
+                    if (fileSize != 0) {
+                        while (buf.readableBytes() > 0) {
+                            out.write(buf.readByte());
+                            receivedFileSize++;
+                            if (fileSize == receivedFileSize) {
+                                log.info(String.format("[ip: %s]: File transaction end.", ctx.channel().remoteAddress()));
+                                currentState = State.FILE_LIST;
+                                out.close();
+                                break;
+                            }
                         }
+                    } else {
+                        currentState = State.FILE_LIST;
+                        out.close();
+                        break;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error(String.format("[ip: %s]: File transaction ERROR: [%s]: %s", ctx.channel().remoteAddress(), e.getClass().getSimpleName(), e.getMessage()));
                     currentState = State.IDLE;
                     out.close();
                 }
@@ -167,6 +181,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
              */
 
             if (currentState == State.FILE_LIST) {
+                log.info(String.format("[ip: %s]: Build and send file list to client", ctx.channel().remoteAddress()));
                 List<FileInfo> serverFiles = Files.list(currentPath)
                         .map(FileInfo::new)
                         .collect(Collectors.toList());
@@ -174,7 +189,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 for (FileInfo fileInfo : serverFiles) {
                     stringBuilder.append(String.format("%s,%d,%s,%s\n", fileInfo.getFileName(), fileInfo.getSize(), fileInfo.getFileType(), fileInfo.getLastModified()));
                 }
-                fileService.sendCommand(ctx.channel(), "/FileList " + stringBuilder.toString());
+                fileService.sendCommand(ctx.channel(), "/FileList\n" + stringBuilder.toString());
                 currentState = State.IDLE;
             }
         }
@@ -182,17 +197,17 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        System.out.println(ctx.channel().remoteAddress() + " channel is connected.");
+        log.info(String.format("[ip: %s]: Channel is connected", ctx.channel().remoteAddress()));
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        System.out.println(ctx.channel().remoteAddress() + " channel is disconnected.");
+        log.info(String.format("[ip: %s]: Channel is disconnected", ctx.channel().remoteAddress()));
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        log.error(String.format("[ip: %s]: Channel disconnected with error: [%s]: %s", ctx.channel().remoteAddress(), cause.getClass().getSimpleName(), cause.getMessage()));
         if (ctx.channel().isActive()) {
             fileService.sendCommand(ctx.channel(), "ERR: " +
                     cause.getClass().getSimpleName() + ": " +

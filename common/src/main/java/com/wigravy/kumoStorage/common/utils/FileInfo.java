@@ -1,12 +1,16 @@
 package com.wigravy.kumoStorage.common.utils;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-
+@Getter
+@Setter
 public class FileInfo {
     private String fileName;
     private FileType fileType;
@@ -27,38 +31,6 @@ public class FileInfo {
         } catch (IOException e) {
             throw new RuntimeException("Unable to create file information from path. Check the program permissions and try again.");
         }
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public FileType getFileType() {
-        return fileType;
-    }
-
-    public void setFileType(FileType fileType) {
-        this.fileType = fileType;
-    }
-
-    public long getSize() {
-        return size;
-    }
-
-    public void setSize(long size) {
-        this.size = size;
-    }
-
-    public LocalDateTime getLastModified() {
-        return lastModified;
-    }
-
-    public void setLastModified(LocalDateTime lastModified) {
-        this.lastModified = lastModified;
     }
 
     public static String getStringSize(long bytes) {
