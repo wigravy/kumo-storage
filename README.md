@@ -1,6 +1,6 @@
 # kumo-storage
 
-*Это учебный проект, проверяйте код перед использованием!*
+*Это учебный проект с портала Geekbrains, проверяйте код перед использованием!*
 
 ![Окно авторизации](https://github.com/wigravy/kumo-storage/blob/master/img/login.png)
 
