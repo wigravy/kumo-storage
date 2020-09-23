@@ -74,6 +74,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                 String[] command = stringBuilder.toString().split("\n");
                 switch (command[0]) {
                     case "/authorization":
+                        log.info(String.format("[ip: %s]: Command from client: Authorization", ctx.channel().remoteAddress()));
                         if (command[1].equals("test") && command[2].equals("test")) {
                             fileService.sendCommand(ctx.channel(), "/authorization\nOK");
                         } else {
@@ -82,31 +83,31 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                         currentState = State.IDLE;
                         break;
                     case "/download":
-                        log.info(String.format("[ip: %s]: Send command: Download file", ctx.channel().remoteAddress()));
+                        log.info(String.format("[ip: %s]: Command from client: Download file", ctx.channel().remoteAddress()));
                         fileService.uploadFile(ctx.channel(), currentPath.resolve(command[1]), null);
-                        currentState = State.FILE_LIST;
+                        currentState = State.IDLE;
                         break;
                     case "/enterToDirectory":
-                        log.info(String.format("[ip: %s]: Send command: Enter to directory %s", ctx.channel().remoteAddress(), command[1]));
+                        log.info(String.format("[ip: %s]: Command from client: Enter to directory %s", ctx.channel().remoteAddress(), command[1]));
                         currentPath = currentPath.resolve(command[1]);
                         currentState = State.FILE_LIST;
                         break;
                     case "/updateFileList":
-                        log.info(String.format("[ip: %s]: Send command: Update file list", ctx.channel().remoteAddress()));
+                        log.info(String.format("[ip: %s]: Command from client: Update file list", ctx.channel().remoteAddress()));
                         currentState = State.FILE_LIST;
                         break;
                     case "/delete":
-                        log.info(String.format("[ip: %s]: Send command: Delete file %s", ctx.channel().remoteAddress(), command[1]));
+                        log.info(String.format("[ip: %s]: Command from client: Delete file %s", ctx.channel().remoteAddress(), command[1]));
                         fileService.delete(currentPath.resolve(command[1]));
                         currentState = State.FILE_LIST;
                         break;
                     case "/rename":
-                        log.info(String.format("[ip: %s]: Send command: Rename file. Path to file: (%s). New name: (%s).", ctx.channel().remoteAddress(), command[1], command[2]));
+                        log.info(String.format("[ip: %s]: Command from client: Rename file. Path to file: (%s). New name: (%s).", ctx.channel().remoteAddress(), command[1], command[2]));
                         fileService.rename(currentPath.resolve(command[1]), command[2]);
                         currentState = State.FILE_LIST;
                         break;
                     case "/upDirectory":
-                        log.info(String.format("[ip: %s]: Send command: Up directory.", ctx.channel().remoteAddress()));
+                        log.info(String.format("[ip: %s]: Command from client: Up directory.", ctx.channel().remoteAddress()));
                         if (currentPath.getParent().toString().equals("storage")) {
                             currentState = State.IDLE;
                         } else {
@@ -168,7 +169,6 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     } else {
                         currentState = State.FILE_LIST;
                         out.close();
-                        break;
                     }
                 } catch (Exception e) {
                     log.error(String.format("[ip: %s]: File transaction ERROR: [%s]: %s", ctx.channel().remoteAddress(), e.getClass().getSimpleName(), e.getMessage()));
@@ -208,11 +208,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         log.error(String.format("[ip: %s]: Channel disconnected with error: [%s]: %s", ctx.channel().remoteAddress(), cause.getClass().getSimpleName(), cause.getMessage()));
-        if (ctx.channel().isActive()) {
-            fileService.sendCommand(ctx.channel(), "ERR: " +
-                    cause.getClass().getSimpleName() + ": " +
-                    cause.getMessage() + '\n');
-        }
+
     }
 }
 

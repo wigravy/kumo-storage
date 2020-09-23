@@ -22,10 +22,10 @@ import java.nio.file.Path;
 public class MainHandler extends SimpleChannelInboundHandler<Object> {
     private State currentState = State.IDLE;
     private long fileSize = 0L;
-    private long receivedFileSize = 0;
+    private long receivedFileSize = 0L;
     private int filenameLength = 0;
     private int commandLength = 0;
-    private StringBuilder stringBuilder = new StringBuilder();
+    private StringBuilder stringBuilder;
     private BufferedOutputStream out;
     @Setter
     private ServiceMessage callback;
@@ -36,7 +36,6 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf buf = (ByteBuf) msg;
-
         while (buf.readableBytes() > 0) {
             /*
              **      Получаем сигнальный байт
@@ -47,9 +46,10 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     currentState = State.COMMAND;
                 } else if (readByte == ListSignalBytes.FILE_SIGNAL_BYTE) {
                     currentState = State.FILE_NAME_LENGTH;
-                } else {currentState = State.IDLE;
+                } else {
+                    currentState = State.IDLE;
                     log.error("Unknown byte command arrived.");
-                    throw new RuntimeException("Unknown byte command arrived: " + readByte);
+                    throw new IllegalArgumentException("Unknown byte command arrived: " + readByte);
                 }
             }
             /*
@@ -60,34 +60,35 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     commandLength = buf.readInt();
                     currentState = State.COMMAND_READ;
                 }
+            }
 
-                if (currentState == State.COMMAND_READ) {
-                    stringBuilder = new StringBuilder();
-                    while (buf.readableBytes() > 0 && commandLength != 0) {
-                        commandLength--;
-                        stringBuilder.append((char) buf.readByte());
-                    }
-                    currentState = State.COMMAND_DO;
+            if (currentState == State.COMMAND_READ) {
+                stringBuilder = new StringBuilder();
+                while (buf.readableBytes() > 0 && commandLength != 0) {
+                    commandLength--;
+                    stringBuilder.append((char) buf.readByte());
                 }
+                currentState = State.COMMAND_DO;
+            }
 
-                if (currentState == State.COMMAND_DO) {
-                    String[] command = stringBuilder.toString().split("\n");
-                    switch (command[0]) {
-                        case "/authorization":
-                            callback.callback(command[1]);
-                            currentState = State.IDLE;
-                            break;
-                        case "/FileList":
-                            callback.callback(stringBuilder.toString());
-                            currentState = State.IDLE;
-                            break;
-                        default:
-                            // TODO: сделать своё исключение
-                            currentState = State.IDLE;
-                            throw new IllegalArgumentException("Unknown command: " + stringBuilder.toString());
-                    }
+            if (currentState == State.COMMAND_DO) {
+                String[] command = stringBuilder.toString().split("\n");
+                switch (command[0]) {
+                    case "/authorization":
+                        callback.callback(command[1]);
+                        currentState = State.IDLE;
+                        break;
+                    case "/FileList":
+                        callback.callback(stringBuilder.toString());
+                        currentState = State.IDLE;
+                        break;
+                    default:
+                        // TODO: сделать своё исключение
+                        currentState = State.IDLE;
+                        throw new IllegalArgumentException("Unknown command: " + stringBuilder.toString());
                 }
             }
+
 
             /*
              **      Стадия получения файла
@@ -99,47 +100,54 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     filenameLength = buf.readInt();
                     currentState = State.NAME;
                     log.info(String.format("File transaction: Get file name length (%s).", filenameLength));
-
                 }
+            }
 
 
-                if (currentState == State.NAME) {
-                    while (buf.readableBytes() >= filenameLength) {
-                        byte[] filenameBytes = new byte[filenameLength];
-                        buf.readBytes(filenameBytes);
-                        String filename = new String(filenameBytes, StandardCharsets.UTF_8);
-                        File file = new File(currentPath.toString() + "/" + filename);
-                        out = new BufferedOutputStream(new FileOutputStream(file));
-                        currentState = State.FILE_SIZE;
-                        log.info(String.format("File transaction: Get file name (%s).", filename));
-                    }
+            if (currentState == State.NAME) {
+                while (buf.readableBytes() >= filenameLength) {
+                    byte[] filenameBytes = new byte[filenameLength];
+                    buf.readBytes(filenameBytes);
+                    String filename = new String(filenameBytes, StandardCharsets.UTF_8);
+                    File file = new File(currentPath.toString() + "/" + filename);
+                    out = new BufferedOutputStream(new FileOutputStream(file));
+                    currentState = State.FILE_SIZE;
+                    log.info(String.format("File transaction: Get file name (%s).", filename));
                 }
+            }
 
-                if (currentState == State.FILE_SIZE) {
-                    if (buf.readableBytes() >= 8) {
-                        fileSize = buf.readLong();
-                        currentState = State.FILE;
-                        log.info(String.format("File transaction: Get file size (%s).", fileSize));
-                    }
+            if (currentState == State.FILE_SIZE) {
+                if (buf.readableBytes() >= 8) {
+                    fileSize = buf.readLong();
+                    currentState = State.FILE;
+                    log.info(String.format("File transaction: Get file size (%s).", fileSize));
                 }
+            }
 
-                if (currentState == State.FILE) {
-                    try {
+            if (currentState == State.FILE) {
+                try {
+                    if (fileSize != 0) {
                         while (buf.readableBytes() > 0) {
                             out.write(buf.readByte());
                             receivedFileSize++;
                             if (fileSize == receivedFileSize) {
-                                log.info("[ip: %s]: File transaction end.");
-                                currentState = State.FILE_LIST;
+                                callback.callback("/updateClientFileList");
+                                log.info("File transaction end.");
+                                currentState = State.IDLE;
                                 out.close();
                                 break;
                             }
                         }
-                    } catch (Exception e) {
-                        log.error(String.format("File transaction ERROR: [%s]: %s", e.getClass().getSimpleName(), e.getMessage()));
+                    } else {
+                        callback.callback("/updateClientFileList");
                         currentState = State.IDLE;
                         out.close();
                     }
+                } catch (Exception e) {
+                    callback.callback("/updateClientFileList");
+                    log.error(String.format("File transaction ERROR: [%s]: %s", e.getClass().getSimpleName(), e.getMessage()));
+                    currentState = State.IDLE;
+                    out.close();
                 }
             }
         }
@@ -147,7 +155,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
 
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
     }
 }
