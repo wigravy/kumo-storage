@@ -7,8 +7,10 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
 import io.netty.util.concurrent.FutureListener;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -18,27 +20,29 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Log4j2
 public class FileService {
     private FileRegion fileRegion;
     private ByteBuf buffer;
     private byte[] filenameBytes;
 
-    public void uploadFile(Channel channel, Path path, FutureListener listener) {
-        try {
-            fileRegion = new DefaultFileRegion(new FileInputStream(path.toFile()).getChannel(), 0, Files.size(path));
-            filenameBytes = path.getFileName().toString().getBytes(StandardCharsets.UTF_8);
-            buffer = ByteBufAllocator.DEFAULT.directBuffer(1 + 4 + filenameBytes.length + 8);
-            buffer.writeByte(ListSignalBytes.FILE_SIGNAL_BYTE);
-            buffer.writeInt(path.getFileName().toString().length());
-            buffer.writeBytes(filenameBytes);
-            buffer.writeLong(Files.size(path));
-            channel.writeAndFlush(buffer);
-            ChannelFuture future = channel.writeAndFlush(fileRegion);
-            if (listener != null) {
-                future.addListener(listener);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+    public void uploadFile(Channel channel, Path path, FutureListener listener) throws IOException {
+        fileRegion = new DefaultFileRegion(new FileInputStream(path.normalize().toFile()).getChannel(), 0, Files.size(path.normalize()));
+        filenameBytes = path.normalize().getFileName().toString().getBytes(StandardCharsets.UTF_8);
+        buffer = ByteBufAllocator.DEFAULT.directBuffer(1 + 4 + filenameBytes.length + 8);
+        buffer.writeByte(ListSignalBytes.FILE_SIGNAL_BYTE);
+        buffer.writeInt(path.normalize().getFileName().toString().length());
+        buffer.writeBytes(filenameBytes);
+        buffer.writeLong(Files.size(path.normalize()));
+        log.info(String.format("Upload file: %s\n" +
+                "Path to file: %s\n" +
+                "filename length: %d\n" +
+                "file size: %d byte", path.getFileName().toString(), path.toString(), path.getFileName().toString().length(), Files.size(path)));
+        channel.writeAndFlush(buffer);
+        ChannelFuture future = channel.writeAndFlush(fileRegion);
+        if (listener != null) {
+            future.addListener(listener);
         }
     }
 

@@ -9,9 +9,11 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import com.wigravy.kumoStorage.common.utils.FileService;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.*;
@@ -59,6 +61,8 @@ public class MainAppController implements Initializable {
                             serverFilesTable.getItems().clear();
                         });
                     }
+                } else if (serviceMsg.startsWith("/updateClientFileList")) {
+                    updateFilesList(Paths.get(getCurrentPath()));
                 }
             });
         });
@@ -68,13 +72,15 @@ public class MainAppController implements Initializable {
     }
 
 
-    private void prepareTableEvents(TableView<FileInfo> serverFilesTable) {
-        serverFilesTable.setOnMouseClicked(event -> {
+    private void prepareTableEvents(TableView<FileInfo> tableView) {
+        tableView.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                enterToDirectory();
+                if (tableView.getSelectionModel().getSelectedItem().getFileType() == FileType.DIRECTORY) {
+                    enterToDirectory();
+                }
             }
         });
-        serverFilesTable.setOnKeyPressed(event -> {
+        tableView.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 enterToDirectory();
             } else if (event.getCode() == KeyCode.DELETE) {
@@ -129,6 +135,7 @@ public class MainAppController implements Initializable {
     private void upClientPathDirectory() {
         Path upPath = Paths.get(clientPathToFile.getText()).getParent();
         if (upPath != null) {
+            network.getMainHandler().setCurrentPath(upPath);
             updateFilesList(upPath);
         }
     }
@@ -146,9 +153,8 @@ public class MainAppController implements Initializable {
     }
 
     public void enterToDirectory() {
-        if (serverFilesTable.isFocused() && serverFilesTable.getSelectionModel().getSelectedItem().getFileType() == FileType.DIRECTORY) {
+        if (serverFilesTable.isFocused()) {
             fileService.sendCommand(network.getChannel(), "/enterToDirectory\n" + getSelectedFileName());
-            System.out.println("Send command enter to directory");
         } else {
             Path path = Paths.get(clientPathToFile.getText())
                     .resolve(clientFilesTable
@@ -157,6 +163,7 @@ public class MainAppController implements Initializable {
                             .getFileName());
             if (Files.isDirectory(path)) {
                 updateFilesList(path);
+                network.getMainHandler().setCurrentPath(path);
             }
         }
     }
@@ -174,7 +181,7 @@ public class MainAppController implements Initializable {
         }
     }
 
-    public void btnDeleteFile(ActionEvent actionEvent) throws IOException {
+    public void btnDeleteFile(ActionEvent actionEvent) {
         delete();
     }
 
@@ -224,7 +231,11 @@ public class MainAppController implements Initializable {
             network.getMainHandler().setCurrentPath(Path.of(getCurrentPath()));
             fileService.sendCommand(network.getChannel(), "/download\n" + getSelectedFileName());
         } else {
-            fileService.uploadFile(network.getChannel(), getSelectedFile(), null);
+            try {
+                fileService.uploadFile(network.getChannel(), getSelectedFile(), null);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
