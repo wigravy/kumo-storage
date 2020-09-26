@@ -9,8 +9,8 @@ import io.netty.channel.FileRegion;
 import io.netty.util.concurrent.FutureListener;
 import lombok.extern.log4j.Log4j2;
 
+import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -28,13 +28,13 @@ public class FileService {
 
 
     public void uploadFile(Channel channel, Path path, FutureListener listener) throws IOException {
-        fileRegion = new DefaultFileRegion(new FileInputStream(path.normalize().toFile()).getChannel(), 0, Files.size(path.normalize()));
-        filenameBytes = path.normalize().getFileName().toString().getBytes(StandardCharsets.UTF_8);
+        fileRegion = new DefaultFileRegion(new FileInputStream(path.toFile()).getChannel(), 0, Files.size(path.normalize()));
+        filenameBytes = path.getFileName().toString().getBytes(StandardCharsets.UTF_8);
         buffer = ByteBufAllocator.DEFAULT.directBuffer(1 + 4 + filenameBytes.length + 8);
         buffer.writeByte(ListSignalBytes.FILE_SIGNAL_BYTE);
-        buffer.writeInt(path.normalize().getFileName().toString().length());
+        buffer.writeInt(path.getFileName().toString().length());
         buffer.writeBytes(filenameBytes);
-        buffer.writeLong(Files.size(path.normalize()));
+        buffer.writeLong(Files.size(path));
         log.info(String.format("Upload file: %s\n" +
                 "Path to file: %s\n" +
                 "filename length: %d\n" +
@@ -61,6 +61,15 @@ public class FileService {
     public void rename(Path path, String newFileName) throws IOException {
         Path renameTo = path.resolveSibling(newFileName);
         Files.move(path, renameTo, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public void createDirectory(Path path, String directory) throws Exception {
+        File dir = new File(path + File.separator + directory);
+        if (dir.exists()) {
+            throw new Exception("The directory is already exists");
+        } else {
+            dir.mkdir();
+        }
     }
 
     public List<FileInfo> createFileList(String s) {
