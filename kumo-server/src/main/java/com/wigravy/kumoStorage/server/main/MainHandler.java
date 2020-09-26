@@ -10,9 +10,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.log4j.Log4j2;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +32,7 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
 
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
         ByteBuf buf = (ByteBuf) msg;
         while (buf.readableBytes() > 0) {
             /*
@@ -84,9 +82,15 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                         break;
                     case "/download":
                         log.info(String.format("[ip: %s]: Command from client: Download file", ctx.channel().remoteAddress()));
-                        fileService.uploadFile(ctx.channel(), currentPath.resolve(command[1]), null);
-                        currentState = State.IDLE;
-                        break;
+                        try {
+                            fileService.uploadFile(ctx.channel(), currentPath.resolve(command[1]), null);
+                            currentState = State.IDLE;
+                            break;
+                        } catch (IOException e) {
+                            fileService.sendCommand(ctx.channel(), String.format("/Error\n%s\n%s", e.getClass().getSimpleName(), e.getCause().getMessage()));
+                            currentState = State.IDLE;
+                            break;
+                        }
                     case "/enterToDirectory":
                         log.info(String.format("[ip: %s]: Command from client: Enter to directory %s", ctx.channel().remoteAddress(), command[1]));
                         currentPath = currentPath.resolve(command[1]);
@@ -98,14 +102,28 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                         break;
                     case "/delete":
                         log.info(String.format("[ip: %s]: Command from client: Delete file %s", ctx.channel().remoteAddress(), command[1]));
-                        fileService.delete(currentPath.resolve(command[1]));
-                        currentState = State.FILE_LIST;
-                        break;
+                        try {
+                            fileService.delete(currentPath.resolve(command[1]));
+                            currentState = State.FILE_LIST;
+                            break;
+                        } catch (IOException e) {
+                            fileService.sendCommand(ctx.channel(), String.format("/Error\n%s\n%s", e.getClass().getSimpleName(), e.getCause().getMessage()));
+                            currentState = State.IDLE;
+                            break;
+                        }
+
                     case "/rename":
                         log.info(String.format("[ip: %s]: Command from client: Rename file. Path to file: (%s). New name: (%s).", ctx.channel().remoteAddress(), command[1], command[2]));
-                        fileService.rename(currentPath.resolve(command[1]), command[2]);
-                        currentState = State.FILE_LIST;
-                        break;
+                        try {
+                            fileService.rename(currentPath.resolve(command[1]), command[2]);
+                            currentState = State.FILE_LIST;
+                            break;
+                        } catch (IOException e) {
+                            fileService.sendCommand(ctx.channel(), String.format("/Error\n%s\n%s", e.getClass().getSimpleName(), e.getCause().getMessage()));
+                            currentState = State.IDLE;
+                            break;
+                        }
+
                     case "/upDirectory":
                         log.info(String.format("[ip: %s]: Command from client: Up directory.", ctx.channel().remoteAddress()));
                         if (currentPath.getParent().toString().equals("storage")) {
@@ -115,6 +133,18 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                             currentState = State.FILE_LIST;
                         }
                         break;
+                    case "/createDirectory":
+                        log.info(String.format("[ip: %s]: Command from client: Create Directory. Directory name: (%s).", ctx.channel().remoteAddress(), command[1]));
+                        try {
+                            fileService.createDirectory(currentPath, command[1]);
+                            currentState = State.FILE_LIST;
+                            break;
+                        } catch (Exception e) {
+                            fileService.sendCommand(ctx.channel(), String.format("/Error\n%s\n%s", e.getClass().getSimpleName(), e.getCause().getMessage()));
+                            currentState = State.IDLE;
+                            break;
+                        }
+
                     default:
                         currentState = State.IDLE;
                         throw new IllegalArgumentException("Unknown command: " + stringBuilder.toString());
@@ -138,8 +168,14 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                     byte[] filenameBytes = new byte[filenameLength];
                     buf.readBytes(filenameBytes);
                     String filename = new String(filenameBytes, StandardCharsets.UTF_8);
-                    File file = new File(currentPath.toString() + "/" + filename);
-                    out = new BufferedOutputStream(new FileOutputStream(file));
+                    File file = new File(currentPath.toString() + File.separator + filename);
+                    try {
+                        out = new BufferedOutputStream(new FileOutputStream(file));
+                    } catch (FileNotFoundException e) {
+                        fileService.sendCommand(ctx.channel(), String.format("/Error\n%s\n%s", e.getClass().getSimpleName(), e.getCause().getMessage()));
+                        currentState = State.IDLE;
+                        break;
+                    }
                     currentState = State.FILE_SIZE;
                     log.info(String.format("[ip: %s]: File transaction: Get file name (%s)", ctx.channel().remoteAddress(), filename));
                 }
@@ -162,18 +198,22 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
                             if (fileSize == receivedFileSize) {
                                 log.info(String.format("[ip: %s]: File transaction end.", ctx.channel().remoteAddress()));
                                 currentState = State.FILE_LIST;
-                                out.close();
                                 break;
                             }
                         }
                     } else {
                         currentState = State.FILE_LIST;
-                        out.close();
                     }
                 } catch (Exception e) {
                     log.error(String.format("[ip: %s]: File transaction ERROR: [%s]: %s", ctx.channel().remoteAddress(), e.getClass().getSimpleName(), e.getMessage()));
+                    fileService.sendCommand(ctx.channel(), String.format("/Error\n%s\n%s", e.getClass().getSimpleName(), e.getCause().getMessage()));
                     currentState = State.IDLE;
-                    out.close();
+                } finally {
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             /*
@@ -182,15 +222,23 @@ public class MainHandler extends SimpleChannelInboundHandler<Object> {
 
             if (currentState == State.FILE_LIST) {
                 log.info(String.format("[ip: %s]: Build and send file list to client", ctx.channel().remoteAddress()));
-                List<FileInfo> serverFiles = Files.list(currentPath)
-                        .map(FileInfo::new)
-                        .collect(Collectors.toList());
-                stringBuilder = new StringBuilder();
-                for (FileInfo fileInfo : serverFiles) {
-                    stringBuilder.append(String.format("%s,%d,%s,%s\n", fileInfo.getFileName(), fileInfo.getSize(), fileInfo.getFileType(), fileInfo.getLastModified()));
+                List<FileInfo> serverFiles = null;
+                try {
+                    serverFiles = Files.list(currentPath)
+                            .map(FileInfo::new)
+                            .collect(Collectors.toList());
+                    stringBuilder = new StringBuilder();
+                    for (FileInfo fileInfo : serverFiles) {
+                        stringBuilder.append(String.format("%s,%d,%s,%s\n", fileInfo.getFileName(), fileInfo.getSize(), fileInfo.getFileType(), fileInfo.getLastModified()));
+                    }
+                    fileService.sendCommand(ctx.channel(), "/FileList\n" + stringBuilder.toString());
+                    currentState = State.IDLE;
+                } catch (IOException e) {
+                    fileService.sendCommand(ctx.channel(), String.format("/Error\n%s\n%s", e.getClass().getSimpleName(), e.getCause().getMessage()));
+                    currentState = State.IDLE;
+                    break;
                 }
-                fileService.sendCommand(ctx.channel(), "/FileList\n" + stringBuilder.toString());
-                currentState = State.IDLE;
+
             }
         }
     }

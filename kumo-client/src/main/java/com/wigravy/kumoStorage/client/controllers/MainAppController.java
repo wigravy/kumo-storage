@@ -1,22 +1,22 @@
 package com.wigravy.kumoStorage.client.controllers;
 
 import com.wigravy.kumoStorage.client.network.Network;
+import com.wigravy.kumoStorage.common.utils.FileInfo;
+import com.wigravy.kumoStorage.common.utils.FileService;
 import com.wigravy.kumoStorage.common.utils.FileType;
 import javafx.application.Platform;
-import com.wigravy.kumoStorage.common.utils.FileInfo;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import com.wigravy.kumoStorage.common.utils.FileService;
+import lombok.SneakyThrows;
 
-import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -48,7 +48,8 @@ public class MainAppController implements Initializable {
 
         Thread t = new Thread(() -> {
             network.getMainHandler().setCallback(serviceMsg -> {
-                if (serviceMsg.startsWith("/FileList")) {
+                String[] command = serviceMsg.split("\n");
+                if (command[0].equals("/FileList")) {
                     if (serviceMsg.split("\n").length != 1) {
                         serverFileList = fileService.createFileList(serviceMsg.split("\n", 2)[1]);
                         Platform.runLater(() -> {
@@ -61,8 +62,12 @@ public class MainAppController implements Initializable {
                             serverFilesTable.getItems().clear();
                         });
                     }
-                } else if (serviceMsg.startsWith("/updateClientFileList")) {
+                } else if (command[0].equals("/updateClientFileList")) {
                     updateFilesList(Paths.get(getCurrentPath()));
+                } else if (command[0].equals("/Error")) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, command[2], ButtonType.OK);
+                    alert.setTitle(command[1]);
+                    alert.showAndWait();
                 }
             });
         });
@@ -114,13 +119,16 @@ public class MainAppController implements Initializable {
         }
     }
 
+    @SneakyThrows
     public String getSelectedFileName() {
         if (clientFilesTable.isFocused()) {
             return clientFilesTable.getSelectionModel().getSelectedItem().getFileName();
         } else if (serverFilesTable.isFocused()) {
             return serverFilesTable.getSelectionModel().getSelectedItem().getFileName();
         } else {
-            throw new NullPointerException("No one file selected");
+            Alert alertError = new Alert(Alert.AlertType.ERROR, "No one file selected", ButtonType.OK);
+            alertError.showAndWait();
+            throw new Exception("No one file selected");
         }
     }
 
@@ -168,16 +176,36 @@ public class MainAppController implements Initializable {
         }
     }
 
+
     private void delete() {
         if (serverFilesTable.isFocused()) {
-            fileService.sendCommand(network.getChannel(), "/delete\n" + getSelectedFileName());
-        } else if (clientFilesTable.isFocused()) {
-            try {
-                fileService.delete(getSelectedFile());
-            } catch (IOException e) {
-                e.printStackTrace();
+            String fileName = getSelectedFileName();
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Delete");
+            alert.setContentText("Are you sure you want to delete the selected item?");
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                fileService.sendCommand(network.getChannel(), "/delete\n" + fileName);
             }
-            updateFilesList(Paths.get(getCurrentPath()));
+        } else if (clientFilesTable.isFocused()) {
+            Path path = getSelectedFile();
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Delete");
+            alert.setContentText("Are you sure you want to delete the selected item?");
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                try {
+                    fileService.delete(path);
+                } catch (IOException e) {
+                    Alert alertError = new Alert(Alert.AlertType.ERROR, e.getMessage(), ButtonType.OK);
+                    alertError.setTitle(e.getClass().getSimpleName());
+                    alertError.showAndWait();
+                }
+                updateFilesList(Paths.get(getCurrentPath()));
+            }
+        } else {
+            Alert alertError = new Alert(Alert.AlertType.ERROR, "No one item selected", ButtonType.OK);
+            alertError.showAndWait();
         }
     }
 
@@ -234,8 +262,39 @@ public class MainAppController implements Initializable {
             try {
                 fileService.uploadFile(network.getChannel(), getSelectedFile(), null);
             } catch (IOException e) {
-                e.printStackTrace();
+                Alert alertError = new Alert(Alert.AlertType.ERROR, e.getMessage(), ButtonType.OK);
+                alertError.setTitle(e.getClass().getSimpleName());
+                alertError.showAndWait();
             }
+        }
+    }
+
+    public void btnNewFolder(ActionEvent actionEvent) {
+        if (clientFilesTable.isFocused()) {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Create new folder");
+            dialog.setHeaderText("Enter a name for the new folder");
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                try {
+                    fileService.createDirectory(Paths.get(getCurrentPath()), result.get());
+                } catch (Exception e) {
+                    Alert alertError = new Alert(Alert.AlertType.ERROR, e.getMessage(), ButtonType.OK);
+                    alertError.setTitle(e.getClass().getSimpleName());
+                    alertError.showAndWait();
+                } finally {
+                    updateFilesList(Paths.get(getCurrentPath()));
+                }
+            }
+        } else if (serverFilesTable.isFocused()) {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Create new folder");
+            dialog.setHeaderText("Enter a name for the new folder");
+            Optional<String> result = dialog.showAndWait();
+            result.ifPresent(s -> fileService.sendCommand(network.getChannel(), "/createDirectory\n" + s));
+        } else {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Select any item on the server-side or client-side", ButtonType.OK);
+            alert.showAndWait();
         }
     }
 }
